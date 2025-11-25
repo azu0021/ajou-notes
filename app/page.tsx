@@ -1,5 +1,10 @@
 'use client';
 
+/**
+ * ☝️ [중요] Next.js App Router에서 useState, useEffect 등을 쓰려면
+ * 반드시 파일 최상단에 'use client'; 가 있어야 해!
+ */
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAnalytics } from 'firebase/analytics';
@@ -7,7 +12,6 @@ import {
   getAuth,
   signInAnonymously,
   onAuthStateChanged,
-  signInWithCustomToken
 } from 'firebase/auth';
 import {
   getFirestore,
@@ -92,22 +96,10 @@ const DEFAULT_EXCHANGES = [
 
 /**
  * ------------------------------------------------------------------
- * [Firebase Init - Dual Environment Support]
- * Canvas(미리보기)와 Vercel(배포) 모두 지원하도록 설정
+ * [Firebase Init]
  * ------------------------------------------------------------------
  */
-// 1. 전역 변수 안전하게 가져오기 (TS 에러 방지용)
-const getEnvVar = (key: string) => {
-  if (typeof window !== 'undefined' && (window as any)[key] != null) {
-    return (window as any)[key];
-  }
-  return undefined;
-};
-
-// 2. Firebase 설정 안전하게 파싱
-const rawEnvConfig = getEnvVar('__firebase_config');
-
-let firebaseConfig: any = {
+const firebaseConfig = {
   apiKey: "AIzaSyApCBDZtKlXoeclGosSDwYGrZxmLlvRHc4",
   authDomain: "berry-log.firebaseapp.com",
   projectId: "berry-log",
@@ -117,50 +109,25 @@ let firebaseConfig: any = {
   measurementId: "G-EZEWGTX337"
 };
 
-if (rawEnvConfig) {
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// Analytics (브라우저 환경 안전하게 실행)
+if (typeof window !== 'undefined') {
   try {
-    // 문자열이면 JSON.parse, 객체면 그대로 사용
-    if (typeof rawEnvConfig === "string") {
-      firebaseConfig = JSON.parse(rawEnvConfig);
-    } else if (typeof rawEnvConfig === "object") {
-      firebaseConfig = rawEnvConfig;
-    }
+    getAnalytics(app);
   } catch (e) {
-    console.error("Failed to parse __firebase_config, using default config.", e);
+    console.log("Analytics skipped");
   }
 }
 
-// 3. Firebase 초기화 (예외 안전)
-let app: any = null;
-let auth: any = null;
-let db: any = null;
+const appId = 'very-daily-log';
 
-try {
-  app = initializeApp(firebaseConfig);
-  auth = getAuth(app);
-  db = getFirestore(app);
-
-  if (typeof window !== "undefined") {
-    try {
-      getAnalytics(app);
-    } catch {
-      console.log("Analytics init skipped");
-    }
-  }
-} catch (e) {
-  console.error("Firebase init error:", e);
-}
-
-// 4. App ID / 초기 토큰
-const envAppId = getEnvVar('__app_id');
-const appId = envAppId || 'very-daily-log';
-const initialAuthToken = getEnvVar('__initial_auth_token');
-
-// 날짜 포맷팅
-const formatDate = (dateString: string) => {
-  if (!dateString) return '-';
-  const d = new Date(dateString);
-  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+// 유틸리티 함수들
+const formatNumber = (num: any) => {
+  if (num === '' || num === null || num === undefined) return '';
+  return Number(num).toLocaleString(undefined, { maximumFractionDigits: 2 });
 };
 
 const getCurrentDateTimeString = () => {
@@ -168,25 +135,12 @@ const getCurrentDateTimeString = () => {
   return new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
 };
 
-const formatNumber = (num: any) => {
-  if (num === '' || num === null || num === undefined) return '';
-  return Number(num).toLocaleString(undefined, { maximumFractionDigits: 2 });
-};
-
 /**
  * ------------------------------------------------------------------
- * [메인 앱]
+ * [메인 앱 컴포넌트]
  * ------------------------------------------------------------------
  */
 export default function VeryDailyLog() {
-   // Firebase 초기화 실패 시
-  if (!auth || !db) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-rose-50 text-rose-500">
-        Firebase 설정 오류 때문에 페이지를 표시할 수 없다.
-      </div>
-    );
-  }
   const [user, setUser] = useState<any>(null);
   const [records, setRecords] = useState<any[]>([]);
   const [strategies, setStrategies] = useState(DEFAULT_STRATEGIES);
@@ -203,17 +157,11 @@ export default function VeryDailyLog() {
 
   const Icons = APP_CONFIG.icons;
 
-  // --- Auth & Data Loading ---
+  // Auth Init
   useEffect(() => {
     const initAuth = async () => {
       try {
-        // Canvas 환경: 커스텀 토큰이 있으면 그것으로 로그인 (Rule 3 준수)
-        if (initialAuthToken) {
-          await signInWithCustomToken(auth, initialAuthToken);
-        } else {
-          // Vercel/Local 환경: 익명 로그인
-          await signInAnonymously(auth);
-        }
+        await signInAnonymously(auth);
       } catch (error) {
         console.error("Auth Error:", error);
       }
@@ -226,11 +174,10 @@ export default function VeryDailyLog() {
     return () => unsubscribe();
   }, []);
 
-  // 기록 데이터 로드
+  // Data Fetching
   useEffect(() => {
     if (!user) return;
     setLoading(true);
-    // 데이터 경로: artifacts/{appId}/users/{userId}/stock_records
     const q = query(
       collection(db, 'artifacts', appId, 'users', user.uid, 'stock_records'),
       orderBy('openDate', 'desc')
@@ -240,13 +187,13 @@ export default function VeryDailyLog() {
       setRecords(data);
       setLoading(false);
     }, (error) => {
-      console.error("Data fetch error:", error);
+      console.error("Fetch Error:", error);
       setLoading(false);
     });
     return () => unsubscribe();
   }, [user]);
 
-  // 설정 데이터 로드
+  // Settings Fetching
   useEffect(() => {
     if (!user) return;
     const fetchSettings = async () => {
@@ -258,7 +205,7 @@ export default function VeryDailyLog() {
           if (data.exchanges) setExchanges(data.exchanges);
         }
       } catch (e) {
-        console.error("Settings fetch error", e);
+        console.error("Settings Error:", e);
       }
     };
     fetchSettings();
@@ -272,7 +219,7 @@ export default function VeryDailyLog() {
       }, { merge: true });
       setExchanges(newExchanges);
     } catch (e) {
-      console.error("Save settings error", e);
+      console.error("Save Settings Error:", e);
     }
   };
 
@@ -287,6 +234,7 @@ export default function VeryDailyLog() {
     if (!user) return;
     let finalData = { ...formData };
     
+    // Auto Calculation
     if (finalData.closePrice && finalData.entryPrice && finalData.leverage) {
       const entry = parseFloat(finalData.entryPrice);
       const close = parseFloat(finalData.closePrice);
@@ -331,7 +279,7 @@ export default function VeryDailyLog() {
       setIsFormOpen(false);
       setEditingRecord(null);
     } catch (e) {
-      console.error("Save error:", e);
+      console.error("Save Error:", e);
     }
   };
 
@@ -341,7 +289,7 @@ export default function VeryDailyLog() {
       await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'stock_records', deleteTarget.id));
       setDeleteTarget(null);
     } catch (e) {
-      console.error("Delete error:", e);
+      console.error("Delete Error:", e);
     }
   };
 
@@ -497,8 +445,12 @@ export default function VeryDailyLog() {
   );
 }
 
-// ... (하위 컴포넌트들은 이전과 동일하지만, 안전한 실행을 위해 전체 포함)
-function DashboardView({ openPositions, closedRecords, onAdd, onEdit, onDelete, searchTerm, setSearchTerm, selectedSymbol, setSelectedSymbol, uniqueSymbols, HighlightText, Icons }: any) {
+// ... Sub Components (Keep as is, they are fine) ...
+
+function DashboardView({ 
+  openPositions, closedRecords, onAdd, onEdit, onDelete, 
+  searchTerm, setSearchTerm, selectedSymbol, setSelectedSymbol, uniqueSymbols, HighlightText, Icons
+}: any) {
   return (
     <div className="space-y-6 animate-fade-in-up">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -522,12 +474,14 @@ function DashboardView({ openPositions, closedRecords, onAdd, onEdit, onDelete, 
           </button>
         </div>
       </div>
+
       <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
         <button onClick={() => setSelectedSymbol('ALL')} className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${selectedSymbol === 'ALL' ? 'bg-rose-500 text-white shadow-md shadow-rose-200' : 'bg-white text-gray-500 hover:bg-rose-50'}`}>ALL</button>
         {uniqueSymbols.map((sym: string) => (
           <button key={sym} onClick={() => setSelectedSymbol(sym)} className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${selectedSymbol === sym ? 'bg-rose-500 text-white shadow-md shadow-rose-200' : 'bg-white text-gray-500 hover:bg-rose-50'}`}>{sym}</button>
         ))}
       </div>
+
       <section>
         <div className="flex items-center gap-2 mb-3">
           <div className="w-2 h-6 bg-rose-400 rounded-full"></div>
@@ -543,6 +497,7 @@ function DashboardView({ openPositions, closedRecords, onAdd, onEdit, onDelete, 
           </div>
         )}
       </section>
+
       <section>
         <details className="group" open={true}>
           <summary className="list-none cursor-pointer mb-3">
@@ -568,6 +523,10 @@ function DashboardView({ openPositions, closedRecords, onAdd, onEdit, onDelete, 
     </div>
   );
 }
+
+// Keep the rest of the components (SettingsView, StatsView, StrategiesView, StatCard, TradeCard, HistoryRow, TradeFormModal, etc.) exactly as they were in previous steps.
+// The critical change is 'use client' at the top.
+
 function SettingsView({ exchanges, onSave, Icons }: any) {
   const [localExchanges, setLocalExchanges] = useState(exchanges);
   const [newEx, setNewEx] = useState({ name: '', makerFee: '0.02', takerFee: '0.05' });
@@ -618,6 +577,7 @@ function SettingsView({ exchanges, onSave, Icons }: any) {
     </div>
   );
 }
+
 function StatsView({ records, Icons }: any) {
   const closed = records.filter((r: any) => r.status === 'Closed');
   const wins = closed.filter((r: any) => r.pnl > 0).length;
@@ -638,6 +598,7 @@ function StatsView({ records, Icons }: any) {
     </div>
   );
 }
+
 function StrategiesView({ strategies }: any) {
   return (
     <div className="space-y-6 animate-fade-in-up">
@@ -653,6 +614,7 @@ function StrategiesView({ strategies }: any) {
     </div>
   );
 }
+
 function StatCard({ label, value, icon, color }: any) {
   return (
     <div className="bg-white p-5 rounded-2xl shadow-sm border border-rose-50 flex flex-col gap-2">
@@ -662,6 +624,7 @@ function StatCard({ label, value, icon, color }: any) {
     </div>
   );
 }
+
 function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons }: any) {
   const isLong = record.position === 'Long';
   return (
@@ -683,6 +646,7 @@ function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons 
     </div>
   );
 }
+
 function HistoryRow({ record, onEdit, onDelete, HighlightText, searchTerm, Icons }: any) {
   const isProfit = record.pnl > 0;
   return (
@@ -700,6 +664,7 @@ function HistoryRow({ record, onEdit, onDelete, HighlightText, searchTerm, Icons
     </div>
   );
 }
+
 function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exchanges, existingSymbols, Icons }: any) {
   const [formData, setFormData] = useState({
     symbol: '', exchange: exchanges[0]?.name || '', position: 'Long', leverage: '1', margin: '', entryPrice: '', entryType: 'Maker', openDate: getCurrentDateTimeString(), status: 'Open', closePrice: '', exitType: 'Taker', exitReason: '', closeDate: '', strategy: strategies[0]?.title || '', entryMemo: '', exitMemo: '',
