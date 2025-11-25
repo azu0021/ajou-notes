@@ -692,7 +692,7 @@ function SettingsView({ exchanges, onSave, Icons, userQuote, onSaveQuote }: any)
             <div key={ex.id} className="bg-zinc-50 p-4 rounded-xl border border-zinc-100 relative">
               <button 
                 onClick={() => handleDelete(ex.id)} 
-                className="absolute top-2 right-2 p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                className="absolute top-2 right-2 p-2 text-zinc-400 hover:text-rose-400 hover:bg-red-50 rounded-full transition-colors"
               >
                 <Icons.Delete size={16} />
               </button>
@@ -877,7 +877,7 @@ function StrategiesView({ strategies, onSave, Icons }: any) {
               <h3 className="font-bold text-lg text-rose-400">{s.title}</h3>
               <button 
                 onClick={() => handleDelete(s.id)}
-                className="opacity-0 group-hover:opacity-100 text-zinc-300 hover:text-red-500 transition-all p-1"
+                className="opacity-0 group-hover:opacity-100 text-zinc-300 hover:text-rose-400 transition-all p-1"
               >
                 <Icons.Delete size={16} />
               </button>
@@ -907,7 +907,7 @@ function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons 
       {/* 수정/삭제 버튼: 모바일에서도 터치 시 잘 눌리도록 z-index 확인 */}
       <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
         <button onClick={() => onEdit(record)} className="p-1.5 bg-white shadow-sm border border-zinc-100 rounded-full text-zinc-400 hover:text-rose-500"><Icons.Edit size={14} /></button>
-        <button onClick={() => onDelete(record)} className="p-1.5 bg-white shadow-sm border border-zinc-100 rounded-full text-zinc-400 hover:text-red-500"><Icons.Delete size={14} /></button>
+        <button onClick={() => onDelete(record)} className="p-1.5 bg-white shadow-sm border border-zinc-100 rounded-full text-zinc-400 hover:text-rose-400"><Icons.Delete size={14} /></button>
       </div>
 
       {/* [수정] pr-16을 추가해서 오른쪽 버튼 자리 확보 (글자 겹침 방지) */}
@@ -975,20 +975,20 @@ function HistoryRow({ record, onEdit, onDelete, HighlightText, searchTerm, Icons
       <div className="flex justify-between md:justify-end items-center gap-6 md:w-1/2">
         <div className="text-right">
           <div className="text-[10px] text-zinc-400">PNL %</div>
-          <div className={`font-bold font-mono ${isProfit ? 'text-green-500' : 'text-red-500'}`}>
+          <div className={`font-bold font-mono ${isProfit ? 'text-green-500' : 'text-rose-400'}`}>
             {record.pnl > 0 ? '+' : ''}{record.pnl}%
           </div>
         </div>
         <div className="text-right w-20">
           <div className="text-[10px] text-zinc-400">순수익($)</div>
-          <div className={`font-bold font-mono text-sm ${isProfit ? 'text-green-500' : 'text-red-500'}`}>
+          <div className={`font-bold font-mono text-sm ${isProfit ? 'text-green-500' : 'text-rose-400'}`}>
             ${formatNumber(record.realizedPnlValue)}
           </div>
           {record.fees > 0 && <div className="text-[9px] text-zinc-300">수수료 -${record.fees}</div>}
         </div>
         <div className="hidden md:flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
            <button onClick={() => onEdit(record)} className="p-2 hover:bg-rose-50 rounded-full text-zinc-400 hover:text-rose-400"><Icons.Edit size={16} /></button>
-           <button onClick={() => onDelete(record)} className="p-2 hover:bg-rose-50 rounded-full text-zinc-400 hover:text-red-500"><Icons.Delete size={16} /></button>
+           <button onClick={() => onDelete(record)} className="p-2 hover:bg-rose-50 rounded-full text-zinc-400 hover:text-rose-400"><Icons.Delete size={16} /></button>
         </div>
       </div>
     </div>
@@ -1251,7 +1251,7 @@ function DeleteConfirmModal({ target, onClose, onConfirm, Icons }: any) {
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-fade-in">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center">
-        <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
+        <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-rose-400">
           <Icons.Delete size={24} />
         </div>
         <h3 className="font-bold text-lg text-zinc-700 mb-2">기록을 삭제할까요?</h3>
@@ -1260,7 +1260,7 @@ function DeleteConfirmModal({ target, onClose, onConfirm, Icons }: any) {
         </p>
         <div className="flex gap-3">
           <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-zinc-200 text-zinc-600 font-medium hover:bg-zinc-50 transition-colors">취소</button>
-          <button onClick={onConfirm} className="flex-1 py-2.5 rounded-xl bg-red-500 text-white font-bold shadow-lg shadow-red-200 hover:bg-red-600 transition-colors">삭제하기</button>
+          <button onClick={onConfirm} className="flex-1 py-2.5 rounded-xl bg-rose-400 text-white font-bold shadow-lg shadow-red-200 hover:bg-red-600 transition-colors">삭제하기</button>
         </div>
       </div>
     </div>
