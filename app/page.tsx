@@ -1137,7 +1137,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
           {/* Entry Info */}
           <div className="bg-zinc-50 p-4 rounded-2xl space-y-3">
              <div className="flex justify-between items-center mb-1">
-                <span className="text-xs font-bold text-blue-400">진입 정보</span>
+                <span className="text-xs font-bold text-rose-400">진입 정보</span>
                 {/* [NEW] 커스텀 토글 적용 */}
                 <ToggleSwitch 
                   options={['Maker', 'Taker']} 
