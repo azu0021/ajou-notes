@@ -39,15 +39,15 @@ import {
   Trash2,
   Edit2,
   X,
-  Pin, // 대문자 Pin
-  Star, // 대문자 Star
+  Pin,
+  Star,
   ChevronDown,
   TrendingUp,
   TrendingDown,
   Building2,
   Coins,
   ArrowRightLeft,
-  MessageSquareQuote, // 문구 수정용 아이콘 추가
+  MessageSquareQuote,
 } from 'lucide-react';
 
 /**
@@ -57,41 +57,21 @@ import {
  */
 const APP_CONFIG = {
   theme: {
-    // [Primary Color] 포인트 색상 -> 연한 핑크 (bg-pink-400)
     primary: 'bg-rose-300',
-    
-    // [Primary Hover] 호버 색상
     primaryHover: 'hover:bg-rose-400',
-    
-    // [Secondary Background] 앱 전체 배경색 -> 차분한 그레이 (bg-zinc-50)
     secondaryBg: 'bg-zinc-50', 
-    
-    // [Sidebar/Header Background] 사이드바 배경색 -> 흰색 (bg-white)
     sidebarBg: 'bg-white',
-
-    // [Card Background] 카드 배경색 (흰색 유지)
     cardBg: 'bg-white',
-    
-    // [Text Main] 기본 글자 색상
     textMain: 'text-zinc-700',
-    
-    // [Text Sub] 보조 글자 색상
     textSub: 'text-zinc-500',
-    
-    // [Accent Text] 강조 텍스트 (연한 핑크)
     accent: 'text-rose-400',
-    
-    // [Highlight] 형광펜 효과
     highlight: 'bg-yellow-200',
   },
-  // 2. 아이콘 매핑
   icons: {
-    Dashboard: Star,            
+    Dashboard: Star,      
     Stats: PieChart,            
     Strategies: BookOpen,       
     Settings: Pin,              
-    
-    // -- 기능 버튼 --
     Add: Plus,
     Search: Search,
     Export: Download,
@@ -99,8 +79,6 @@ const APP_CONFIG = {
     Edit: Edit2,
     Close: X,
     Quote: MessageSquareQuote,
-
-    // -- UI 요소 --
     Down: ChevronDown,
     Up: TrendingUp,
     DownTrend: TrendingDown,
@@ -172,7 +150,6 @@ export default function VeryDailyLog() {
   const [records, setRecords] = useState<any[]>([]);
   const [strategies, setStrategies] = useState(DEFAULT_STRATEGIES);
   const [exchanges, setExchanges] = useState(DEFAULT_EXCHANGES);
-  // [NEW] 사용자 문구 상태 추가 (기본값 설정)
   const [userQuote, setUserQuote] = useState("기록이 쌓여 실력이 됩니다.");
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -222,7 +199,7 @@ export default function VeryDailyLog() {
     return () => unsubscribe();
   }, [user]);
 
-  // Settings Fetching (거래소 & 문구)
+  // Settings Fetching (거래소 & 문구 & 전략)
   useEffect(() => {
     if (!user) return;
     const fetchSettings = async () => {
@@ -232,7 +209,8 @@ export default function VeryDailyLog() {
         if (docSnap.exists()) {
           const data = docSnap.data();
           if (data.exchanges) setExchanges(data.exchanges);
-          if (data.quote) setUserQuote(data.quote); // 문구 불러오기
+          if (data.quote) setUserQuote(data.quote);
+          if (data.strategies) setStrategies(data.strategies); // [NEW] 전략 불러오기
         }
       } catch (e) {
         console.error("Settings Error:", e);
@@ -253,7 +231,20 @@ export default function VeryDailyLog() {
     }
   };
 
-  // [NEW] 문구 저장 함수
+  // [NEW] 전략 저장 함수
+  const handleSaveStrategies = async (newStrategies: any[]) => {
+    if (!user) return;
+    try {
+      await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'config'), {
+        strategies: newStrategies
+      }, { merge: true });
+      setStrategies(newStrategies);
+    } catch (e) {
+      console.error("Save Strategies Error:", e);
+    }
+  };
+
+  // 문구 저장 함수
   const handleSaveQuote = async (newQuote: string) => {
     if (!user) return;
     try {
@@ -295,14 +286,12 @@ export default function VeryDailyLog() {
       const exchangeInfo = exchanges.find(ex => ex.name === finalData.exchange);
       const entryFeeRate = (exchangeInfo ? (finalData.entryType === 'Maker' ? exchangeInfo.makerFee : exchangeInfo.takerFee) : 0.04) / 100;
       const exitFeeRate = (exchangeInfo ? (finalData.exitType === 'Maker' ? exchangeInfo.makerFee : exchangeInfo.takerFee) : 0.04) / 100;
-
       const entryFee = positionSize * entryFeeRate;
       const exitValue = positionSize * (1 + (pnlPercent / 100 / lev));
       const exitFee = exitValue * exitFeeRate;
       
       const totalFee = entryFee + exitFee;
       finalData.fees = parseFloat(totalFee.toFixed(2));
-
       const grossPnl = margin * (pnlPercent / 100);
       finalData.grossPnl = parseFloat(grossPnl.toFixed(2));
       finalData.realizedPnlValue = parseFloat((grossPnl - totalFee).toFixed(2));
@@ -352,7 +341,6 @@ export default function VeryDailyLog() {
       r.strategy || '-',
       `"${(r.entryMemo || '')} ${(r.exitMemo || '')}"`
     ]);
-
     const csvContent = BOM + [header, ...rows].map(e => e.join(",")).join("\n");
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
@@ -452,12 +440,17 @@ export default function VeryDailyLog() {
             uniqueSymbols={uniqueSymbols}
             HighlightText={HighlightText}
             Icons={Icons}
-            userQuote={userQuote} // 문구 전달
+            userQuote={userQuote}
           />
         )}
         {activeTab === 'stats' && <StatsView records={records} Icons={Icons} />}
-        {activeTab === 'strategies' && <StrategiesView strategies={strategies} />}
-        {/* 설정 뷰에 문구와 저장 함수 전달 */}
+        {activeTab === 'strategies' && (
+          <StrategiesView 
+            strategies={strategies} 
+            onSave={handleSaveStrategies} // [NEW] 저장 함수 전달
+            Icons={Icons}
+          />
+        )}
         {activeTab === 'settings' && (
           <SettingsView 
             exchanges={exchanges} 
@@ -531,7 +524,8 @@ function DashboardView({
       <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
         <button 
           onClick={() => setSelectedSymbol('ALL')}
-          className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${selectedSymbol === 'ALL' ? 'bg-zinc-700 text-white shadow-md' : 'bg-white text-zinc-500 hover:bg-zinc-50'}`}
+          className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${selectedSymbol === 'ALL' ?
+          'bg-zinc-700 text-white shadow-md' : 'bg-white text-zinc-500 hover:bg-zinc-50'}`}
         >
           ALL
         </button>
@@ -539,7 +533,8 @@ function DashboardView({
           <button 
             key={sym}
             onClick={() => setSelectedSymbol(sym)}
-            className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${selectedSymbol === sym ? 'bg-zinc-700 text-white shadow-md' : 'bg-white text-zinc-500 hover:bg-zinc-50'}`}
+            className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${selectedSymbol 
+            === sym ? 'bg-zinc-700 text-white shadow-md' : 'bg-white text-zinc-500 hover:bg-zinc-50'}`}
           >
             {sym}
           </button>
@@ -550,12 +545,10 @@ function DashboardView({
       <section>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            {/* [수정] 원형 포인트에 테마 색상 적용 */}
             <div className={`w-2 h-2 ${APP_CONFIG.theme.primary} rounded-full`}></div>
             <h3 className="font-bold text-lg text-zinc-700">진행 중인 포지션 ({openPositions.length})</h3>
           </div>
           
-          {/* [수정] 기록하기 버튼: 텍스트 제거하고 아이콘만 남김 */}
           <button 
             onClick={onAdd}
             className={`${APP_CONFIG.theme.primary} ${APP_CONFIG.theme.primaryHover} text-white p-2 rounded-xl shadow-md flex items-center justify-center transition-transform active:scale-95`}
@@ -591,7 +584,6 @@ function DashboardView({
           <summary className="list-none cursor-pointer mb-3 select-none">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                {/* [수정] 원형 포인트 */}
                 <div className="w-2 h-2 bg-zinc-300 group-open:bg-rose-400 rounded-full transition-colors"></div>
                 <h3 className="font-bold text-lg text-zinc-700">매매 기록 보관함 ({closedRecords.length})</h3>
               </div>
@@ -778,7 +770,7 @@ function SettingsView({ exchanges, onSave, Icons, userQuote, onSaveQuote }: any)
                <button 
                 onClick={handleAdd} 
                 className={`${APP_CONFIG.theme.primary} ${APP_CONFIG.theme.primaryHover} text-white p-3 rounded-xl transition-transform active:scale-95 shadow-md shadow-rose-200 flex-shrink-0`}
-               >
+              >
                  <Icons.Add size={20} />
                </button>
              </div>
@@ -797,13 +789,12 @@ function StatsView({ records, Icons }: any) {
   
   const totalNetPnl = closed.reduce((acc: number, cur: any) => acc + (parseFloat(cur.realizedPnlValue) || 0), 0);
   const totalFees = closed.reduce((acc: number, cur: any) => acc + (parseFloat(cur.fees) || 0), 0);
-
   return (
     <div className="space-y-6 animate-fade-in-up">
       <h2 className="text-2xl font-bold text-zinc-700 mb-6">성적표</h2>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard label="총 매매" value={`${total}회`} icon={<Icons.Dashboard size={18} />} color="bg-blue-50 text-blue-600" />
-        <StatCard label="승률" value={`${winRate}%`} icon={<Icons.Up size={18} />} color="bg-rose-50 text-rose-600" />
+        <StatCard label="승률" value={`${winRate}%`} icon={<Icons.Up size={18} />} color="bg-rose-50 text-rose-400" />
         <StatCard label="순수익(Net)" value={`$${formatNumber(totalNetPnl)}`} icon={<Icons.Profit size={18} />} color={totalNetPnl >= 0 ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"} />
         <StatCard label="총 수수료" value={`$${formatNumber(totalFees)}`} icon={<Icons.Fee size={18} />} color="bg-zinc-100 text-zinc-600" />
       </div>
@@ -814,15 +805,83 @@ function StatsView({ records, Icons }: any) {
   );
 }
 
-function StrategiesView({ strategies }: any) {
+// [NEW] 전략 수정 및 삭제 기능이 추가된 컴포넌트
+function StrategiesView({ strategies, onSave, Icons }: any) {
+  const [isAdding, setIsAdding] = useState(false);
+  const [newStrat, setNewStrat] = useState({ title: '', description: '' });
+
+  const handleAdd = () => {
+    if (!newStrat.title) return;
+    const next = [...strategies, { ...newStrat, id: Date.now().toString() }];
+    onSave(next);
+    setNewStrat({ title: '', description: '' });
+    setIsAdding(false);
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm('이 전략을 삭제할까요?')) {
+      const next = strategies.filter((s: any) => s.id !== id);
+      onSave(next);
+    }
+  };
+
   return (
-    <div className="space-y-6 animate-fade-in-up">
-      <h2 className="text-2xl font-bold text-zinc-700">나의 매매 전략 노트</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {strategies.map((s: any, idx: number) => (
-          <div key={idx} className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-100 hover:border-rose-300 transition-all">
-            <h3 className="font-bold text-lg text-rose-500 mb-2">{s.title}</h3>
-            <p className="text-zinc-600 text-sm leading-relaxed">{s.description}</p>
+    <div className="space-y-6 animate-fade-in-up pb-20">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-zinc-700">나의 매매 전략 노트</h2>
+        <button 
+          onClick={() => setIsAdding(!isAdding)}
+          className="flex items-center gap-2 bg-rose-50 text-rose-500 px-4 py-2 rounded-xl font-bold text-sm hover:bg-rose-100 transition-colors"
+        >
+          {isAdding ? <><Icons.Close size={16}/> 취소</> : <><Icons.Add size={16}/> 전략 추가</>}
+        </button>
+      </div>
+
+      {/* 전략 추가 폼 */}
+      {isAdding && (
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-rose-100 animate-fade-in">
+          <h3 className="text-sm font-bold text-zinc-700 mb-3">새로운 전략 작성</h3>
+          <div className="space-y-3">
+            <div>
+              <input 
+                value={newStrat.title}
+                onChange={(e) => setNewStrat({...newStrat, title: e.target.value})}
+                placeholder="전략 이름 (예: RSI 다이버전스)"
+                className="w-full bg-zinc-50 px-4 py-3 rounded-xl text-sm outline-none border border-transparent focus:bg-white focus:border-rose-300 transition-colors font-bold"
+              />
+            </div>
+            <div>
+              <textarea 
+                value={newStrat.description}
+                onChange={(e) => setNewStrat({...newStrat, description: e.target.value})}
+                placeholder="전략에 대한 상세 설명이나 진입 근거를 적어주세요."
+                className="w-full bg-zinc-50 px-4 py-3 rounded-xl text-sm outline-none border border-transparent focus:bg-white focus:border-rose-300 transition-colors resize-none h-24"
+              />
+            </div>
+            <button 
+              onClick={handleAdd}
+              className="w-full bg-rose-400 hover:bg-rose-500 text-white font-bold py-3 rounded-xl shadow-md shadow-rose-200 transition-colors"
+            >
+              저장하기
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 전략 리스트 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {strategies.map((s: any) => (
+          <div key={s.id} className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-100 hover:border-rose-200 transition-all group relative">
+            <div className="flex justify-between items-start mb-2">
+              <h3 className="font-bold text-lg text-rose-500">{s.title}</h3>
+              <button 
+                onClick={() => handleDelete(s.id)}
+                className="opacity-0 group-hover:opacity-100 text-zinc-300 hover:text-red-500 transition-all p-1"
+              >
+                <Icons.Delete size={16} />
+              </button>
+            </div>
+            <p className="text-zinc-600 text-sm leading-relaxed whitespace-pre-wrap">{s.description}</p>
           </div>
         ))}
       </div>
@@ -1016,7 +1075,6 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
   };
 
   if (!isOpen) return null;
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm animate-fade-in">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto custom-scrollbar">
@@ -1110,7 +1168,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
           <div className="space-y-4">
              <div className="flex justify-between items-center">
                <span className="text-sm font-bold text-zinc-700">청산 정보 (선택)</span>
-               <label className="flex items-center gap-2 cursor-pointer select-none">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
                  <input 
                    type="checkbox" 
                    checked={formData.status === 'Closed'} 
@@ -1141,7 +1199,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                    <label className="block text-xs font-bold text-zinc-500 mb-1">청산 기준</label>
                    <div className="flex gap-2 flex-wrap">
                      {['TP Hit', 'SL Hit', 'Trailing', 'Market'].map(reason => (
-                       <button 
+                        <button 
                          key={reason}
                          type="button" 
                          onClick={() => setFormData({...formData, exitReason: reason})}
