@@ -1,10 +1,9 @@
-// app/layout.tsx
-import type { Metadata } from "next";
-import "./globals.css";
+import './globals.css';
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: "Very Daily Log",
-  description: "아주의 아주 간단하지만 집요한 매매 일지",
+  title: 'Very Daily Log',
+  description: '나만의 트레이딩 일지',
 };
 
 export default function RootLayout({
@@ -14,9 +13,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko">
-      <body className="min-h-screen bg-rose-50">
-        {children}
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
