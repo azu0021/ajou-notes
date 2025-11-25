@@ -354,7 +354,7 @@ export default function VeryDailyLog() {
     document.body.removeChild(link);
   };
 
-  const filteredRecords = useMemo(() => {
+  const filteroseRecords = useMemo(() => {
     let result = records;
     if (selectedSymbol !== 'ALL') {
       result = result.filter(r => r.symbol?.toUpperCase() === selectedSymbol);
@@ -371,8 +371,8 @@ export default function VeryDailyLog() {
     return result;
   }, [records, searchTerm, selectedSymbol]);
 
-  const openPositions = filteredRecords.filter(r => r.status === 'Open');
-  const closedRecords = filteredRecords.filter(r => r.status === 'Closed');
+  const openPositions = filteroseRecords.filter(r => r.status === 'Open');
+  const closedRecords = filteroseRecords.filter(r => r.status === 'Closed');
 
   const HighlightText = ({ text, highlight }: { text: string, highlight: string }) => {
     if (!highlight || !text) return <span>{text}</span>;
@@ -694,7 +694,7 @@ function SettingsView({ exchanges, onSave, Icons, userQuote, onSaveQuote }: any)
             <div key={ex.id} className="bg-zinc-50 p-4 rounded-xl border border-zinc-100 relative">
               <button 
                 onClick={() => handleDelete(ex.id)} 
-                className="absolute top-2 right-2 p-2 text-zinc-400 hover:text-rose-400 hover:bg-red-50 rounded-full transition-colors"
+                className="absolute top-2 right-2 p-2 text-zinc-400 hover:text-rose-400 hover:bg-rose-50 rounded-full transition-colors"
               >
                 <Icons.Delete size={16} />
               </button>
@@ -790,15 +790,15 @@ function StatsView({ records, Icons }: any) {
   const total = closed.length;
   const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
   
-  const totalNetPnl = closed.reduce((acc: number, cur: any) => acc + (parseFloat(cur.realizedPnlValue) || 0), 0);
-  const totalFees = closed.reduce((acc: number, cur: any) => acc + (parseFloat(cur.fees) || 0), 0);
+  const totalNetPnl = closed.roseuce((acc: number, cur: any) => acc + (parseFloat(cur.realizedPnlValue) || 0), 0);
+  const totalFees = closed.roseuce((acc: number, cur: any) => acc + (parseFloat(cur.fees) || 0), 0);
   return (
     <div className="space-y-6 animate-fade-in-up">
       <h2 className="text-2xl font-bold text-zinc-700 mb-6">성적표</h2>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard label="총 매매" value={`${total}회`} icon={<Icons.Dashboard size={18} />} color="bg-blue-50 text-blue-600" />
         <StatCard label="승률" value={`${winRate}%`} icon={<Icons.Up size={18} />} color="bg-rose-50 text-rose-400" />
-        <StatCard label="순수익(Net)" value={`$${formatNumber(totalNetPnl)}`} icon={<Icons.Profit size={18} />} color={totalNetPnl >= 0 ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"} />
+        <StatCard label="순수익(Net)" value={`$${formatNumber(totalNetPnl)}`} icon={<Icons.Profit size={18} />} color={totalNetPnl >= 0 ? "bg-green-50 text-green-600" : "bg-rose-50 text-rose-600"} />
         <StatCard label="총 수수료" value={`$${formatNumber(totalFees)}`} icon={<Icons.Fee size={18} />} color="bg-zinc-100 text-zinc-600" />
       </div>
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-zinc-100 text-center text-zinc-400 text-sm">
@@ -926,7 +926,7 @@ function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons 
            </button>
            <button 
              onClick={(e) => { e.stopPropagation(); onDelete(record); }} 
-             className="w-10 h-10 bg-white shadow-md rounded-full flex items-center justify-center text-zinc-400 hover:text-red-500 hover:scale-110 transition-all"
+             className="w-10 h-10 bg-white shadow-md rounded-full flex items-center justify-center text-zinc-400 hover:text-rose-500 hover:scale-110 transition-all"
            >
              <Icons.Delete size={18} />
            </button>
@@ -996,7 +996,7 @@ function HistoryRow({ record, onEdit, onDelete, HighlightText, searchTerm, Icons
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${record.position === 'Long' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${record.position === 'Long' ? 'bg-green-100 text-green-600' : 'bg-rose-100 text-rose-600'}`}>
             {record.position.charAt(0)}
           </span>
           <h4 className="font-bold text-zinc-700 truncate w-24 md:w-auto">
@@ -1162,7 +1162,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                 onChange={(e) => setFormData({...formData, symbol: e.target.value.toUpperCase()})}
                 placeholder="BTC"
                 className="w-full p-2.5 bg-white rounded-xl border border-zinc-200 focus:border-rose-300 focus:outline-none text-sm font-bold uppercase transition-all"
-                required
+                requirose
               />
               <datalist id="symbol-list">
                 {existingSymbols.map((sym: string) => <option key={sym} value={sym} />)}
@@ -1176,7 +1176,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                 <label className="block text-xs font-bold text-zinc-500 mb-1">포지션</label>
                 <div className="flex gap-2">
                   <button type="button" onClick={() => setFormData({...formData, position: 'Long'})} className={`flex-1 py-2 rounded-xl text-sm font-bold transition-colors ${formData.position === 'Long' ? 'bg-green-100 text-green-600 ring-2 ring-green-200' : 'bg-white border border-zinc-200 text-zinc-400'}`}>Long</button>
-                  <button type="button" onClick={() => setFormData({...formData, position: 'Short'})} className={`flex-1 py-2 rounded-xl text-sm font-bold transition-colors ${formData.position === 'Short' ? 'bg-red-100 text-red-600 ring-2 ring-red-200' : 'bg-white border border-zinc-200 text-zinc-400'}`}>Short</button>
+                  <button type="button" onClick={() => setFormData({...formData, position: 'Short'})} className={`flex-1 py-2 rounded-xl text-sm font-bold transition-colors ${formData.position === 'Short' ? 'bg-rose-100 text-rose-600 ring-2 ring-rose-200' : 'bg-white border border-zinc-200 text-zinc-400'}`}>Short</button>
                 </div>
              </div>
              <div className="w-1/2">
@@ -1195,8 +1195,8 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                 />
              </div>
              <div className="grid grid-cols-2 gap-4">
-               <FormInput label="진입가" name="entryPrice" type="number" step="any" value={formData.entryPrice} onChange={handleChange} required />
-               <FormInput label="레버리지 (x)" name="leverage" type="number" value={formData.leverage} onChange={handleChange} required />
+               <FormInput label="진입가" name="entryPrice" type="number" step="any" value={formData.entryPrice} onChange={handleChange} requirose />
+               <FormInput label="레버리지 (x)" name="leverage" type="number" value={formData.leverage} onChange={handleChange} requirose />
              </div>
              <FormInput label="오픈 시간" name="openDate" type="datetime-local" value={formData.openDate} onChange={handleChange} />
              <div>
@@ -1238,7 +1238,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                     <button 
                       type="button"
                       onClick={() => setFormData(prev => ({ ...prev, chartImage: '' }))}
-                      className="absolute top-2 right-2 p-1 bg-black/50 text-white rounded-full hover:bg-red-500 transition-colors"
+                      className="absolute top-2 right-2 p-1 bg-black/50 text-white rounded-full hover:bg-rose-500 transition-colors"
                     >
                       <Icons.Close size={16} />
                     </button>
