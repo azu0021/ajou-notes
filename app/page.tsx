@@ -1128,16 +1128,34 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
           {/* Exchange & Symbol */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-zinc-500 mb-1">거래소</label>
-              <select 
+              {/* 1. 원래 있던 <label>과 <select> 관련 코드는 다 지우고 이 한 덩어리만 남기면 돼요! */}
+              <CustomSelect 
+                label="거래소" 
                 name="exchange" 
                 value={formData.exchange} 
                 onChange={handleChange} 
-                className="w-full p-2.5 bg-zinc-50 rounded-xl border border-transparent focus:bg-white focus:border-rose-300 focus:outline-none text-sm"
-              >
-                {exchanges.map((ex: any) => <option key={ex.id} value={ex.name}>{ex.name}</option>)}
-              </select>
+                options={exchanges}
+                icon={Icons.Down} 
+              />
             </div>
+            
+            {/* 2. 옆에 종목명(Symbol) 입력칸은 그대로 둡니다 */}
+            <div>
+              <label className="block text-xs font-bold text-zinc-500 mb-1">종목명</label>
+              <input 
+                list="symbol-list"
+                name="symbol"
+                value={formData.symbol}
+                onChange={(e) => setFormData({...formData, symbol: e.target.value.toUpperCase()})}
+                placeholder="BTC"
+                className="w-full p-2.5 bg-zinc-50 rounded-xl border border-transparent focus:bg-white focus:border-rose-300 focus:outline-none text-sm font-bold uppercase"
+                required
+              />
+              <datalist id="symbol-list">
+                {existingSymbols.map((sym: string) => <option key={sym} value={sym} />)}
+              </datalist>
+            </div>
+          </div>
             <div>
               <label className="block text-xs font-bold text-zinc-500 mb-1">종목명</label>
               <input 
@@ -1165,7 +1183,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                 </div>
              </div>
              <div className="w-1/2">
-                <FormInput label="증거금 (Margin $)" name="margin" type="number" value={formData.margin} onChange={handleChange} placeholder="$" />
+                <FormInput label="증거금" name="margin" type="number" value={formData.margin} onChange={handleChange} placeholder="$" />
              </div>
           </div>
 
@@ -1175,7 +1193,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                 <span className="text-xs font-bold text-rose-400">진입 정보</span>
                 {/* [NEW] 커스텀 토글 적용 */}
                 <ToggleSwitch 
-                  options={['Maker', 'Taker']} 
+                  options={['Maket', 'Limit']} 
                   value={formData.entryType} 
                   onChange={(val) => setFormData({...formData, entryType: val})} 
                 />
@@ -1226,7 +1244,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                     <span className="text-xs font-bold text-rose-400">청산 세부</span>
                     {/* [NEW] 커스텀 토글 적용 */}
                     <ToggleSwitch 
-                      options={['Maker', 'Taker']} 
+                      options={['Maket', 'Limit']} 
                       value={formData.exitType} 
                       onChange={(val) => setFormData({...formData, exitType: val})} 
                     />
@@ -1325,3 +1343,37 @@ function NavButton({ icon, label, active, onClick }: any) {
     </button>
   );
 }
+
+
+// [NEW] 예쁜 드롭다운 컴포넌트
+function CustomSelect({ label, value, onChange, options, placeholder, name, icon: Icon }: any) {
+  return (
+    <div>
+      {label && <label className="block text-xs font-bold text-zinc-500 mb-1">{label}</label>}
+      <div className="relative w-full">
+        <select
+          name={name}
+          value={value}
+          onChange={onChange}
+          className="w-full bg-zinc-50 rounded-xl px-4 py-3 pr-10 text-sm font-bold text-zinc-700 outline-none border border-transparent focus:bg-white focus:border-rose-300 transition-colors appearance-none cursor-pointer"
+        >
+          {placeholder && <option value="" disabled>{placeholder}</option>}
+          {/* 옵션이 객체인지 문자열인지 확인하여 처리 */}
+          {options.map((opt: any) => {
+            const val = typeof opt === 'object' ? (opt.name || opt.title) : opt;
+            const text = typeof opt === 'object' ? (opt.name || opt.title) : opt;
+            const key = typeof opt === 'object' ? (opt.id || opt.name || opt.title) : opt;
+            return <option key={key} value={val}>{text}</option>;
+          })}
+        </select>
+        
+        {/* 커스텀 화살표 아이콘 (위치 조정됨) */}
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400">
+          {Icon ? <Icon size={16} /> : <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
