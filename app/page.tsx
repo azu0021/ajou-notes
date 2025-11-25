@@ -59,13 +59,15 @@ const APP_CONFIG = {
   theme: {
     primary: 'bg-rose-400',
     primaryHover: 'hover:bg-rose-500',
-    secondaryBg: 'bg-pink-100',
+    // [변경] 배경색을 연한 그레이로 변경
+    secondaryBg: 'bg-gray-50',
     cardBg: 'bg-white',
     textMain: 'text-zinc-700',
     textSub: 'text-gray-500',
     accent: 'text-rose-500',
     highlight: 'bg-yellow-200',
-    sidebarBg: 'bg-pink-50', // 사이드바 배경색
+    // [변경] 사이드바 배경을 흰색으로 변경 (깔끔함 강조)
+    sidebarBg: 'bg-white', 
   },
   icons: {
     Dashboard: Star,
@@ -379,14 +381,14 @@ export default function VeryDailyLog() {
   return (
     <div className={`min-h-screen ${APP_CONFIG.theme.secondaryBg} pb-20 md:pb-0 md:pl-64 transition-all duration-300`}>
       {/* Mobile Nav */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-rose-200 z-50 flex justify-around p-3 pb-safe">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 flex justify-around p-3 pb-safe">
         <NavButton icon={<Icons.Dashboard size={20}/>} label="일지" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
         <NavButton icon={<Icons.Stats size={20}/>} label="통계" active={activeTab === 'stats'} onClick={() => setActiveTab('stats')} />
         <NavButton icon={<Icons.Settings size={20}/>} label="설정" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
       </div>
 
       {/* Desktop Sidebar */}
-      <div className={`hidden md:flex fixed left-0 top-0 bottom-0 w-64 ${APP_CONFIG.theme.sidebarBg} border-r border-rose-100 flex-col p-6 shadow-sm z-40`}>
+      <div className={`hidden md:flex fixed left-0 top-0 bottom-0 w-64 ${APP_CONFIG.theme.sidebarBg} border-r border-gray-200 flex-col p-6 shadow-sm z-40`}>
         
         {/* 로고 영역 */}
         <div className="mb-10 pl-1">
@@ -406,8 +408,8 @@ export default function VeryDailyLog() {
           <SidebarItem icon={<Icons.Settings size={18}/>} label="환경 설정" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
         </nav>
         
-        <div className="pt-6 border-t border-rose-100">
-           <button onClick={handleExportCSV} className="flex items-center gap-2 text-sm text-gray-500 hover:text-rose-500 transition-colors w-full p-2 rounded-lg hover:bg-rose-100">
+        <div className="pt-6 border-t border-gray-200">
+           <button onClick={handleExportCSV} className="flex items-center gap-2 text-sm text-gray-500 hover:text-rose-500 transition-colors w-full p-2 rounded-lg hover:bg-gray-50">
              <Icons.Export size={16} /> 엑셀 다운로드
            </button>
         </div>
@@ -429,7 +431,7 @@ export default function VeryDailyLog() {
             uniqueSymbols={uniqueSymbols}
             HighlightText={HighlightText}
             Icons={Icons}
-            userQuote={userQuote} // 문구 전달
+            userQuote={userQuote}
           />
         )}
         {activeTab === 'stats' && <StatsView records={records} Icons={Icons} />}
@@ -483,7 +485,7 @@ function DashboardView({
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <div className="flex flex-col">
-            <h1 className="text-2xl font-bold text-zinc-600 mb-1">😎</h1>
+            <h1 className="text-2xl font-bold text-zinc-600 mb-1">오늘의 싸움</h1>
             <p className={`${APP_CONFIG.theme.accent} text-sm font-medium`}>{userQuote}</p>
           </div>
         </div>
@@ -491,13 +493,13 @@ function DashboardView({
         {/* 검색창 영역 */}
         <div className="flex items-center gap-3 w-full md:w-auto">
           <div className="relative flex-1 md:w-64">
-            <Icons.Search className="absolute left-3 top-1/2 -translate-y-1/2 text-rose-300" size={16} />
+            <Icons.Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
             <input 
               type="text" 
               placeholder="종목, 메모, 거래소 검색..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-white border border-rose-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 transition-shadow placeholder-rose-200"
+              className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 transition-shadow placeholder-gray-300"
             />
           </div>
         </div>
@@ -507,7 +509,7 @@ function DashboardView({
       <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
         <button 
           onClick={() => setSelectedSymbol('ALL')}
-          className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${selectedSymbol === 'ALL' ? 'bg-rose-500 text-white shadow-md shadow-rose-200' : 'bg-white text-gray-500 hover:bg-rose-50'}`}
+          className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${selectedSymbol === 'ALL' ? 'bg-rose-500 text-white shadow-md shadow-rose-200' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
         >
           ALL
         </button>
@@ -515,7 +517,7 @@ function DashboardView({
           <button 
             key={sym}
             onClick={() => setSelectedSymbol(sym)}
-            className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${selectedSymbol === sym ? 'bg-rose-500 text-white shadow-md shadow-rose-200' : 'bg-white text-gray-500 hover:bg-rose-50'}`}
+            className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${selectedSymbol === sym ? 'bg-rose-500 text-white shadow-md shadow-rose-200' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
           >
             {sym}
           </button>
@@ -540,7 +542,7 @@ function DashboardView({
         </div>
         
         {openPositions.length === 0 ? (
-          <div className="bg-white/60 border border-dashed border-rose-200 rounded-2xl p-8 text-center text-gray-400 text-sm">
+          <div className="bg-white border border-dashed border-gray-200 rounded-2xl p-8 text-center text-gray-400 text-sm">
             현재 보유 중인 포지션이 없어요 🕊️
           </div>
         ) : (
@@ -564,7 +566,7 @@ function DashboardView({
       <section>
         <details className="group" open={true}>
           <summary className="list-none cursor-pointer mb-3">
-            <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-rose-100 hover:border-rose-300 transition-colors">
+            <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:border-gray-300 transition-colors">
               <div className="flex items-center gap-3">
                 <div className="w-1 h-5 bg-gray-300 group-open:bg-rose-400 transition-colors rounded-full"></div>
                 <h3 className="font-bold text-lg text-gray-700">매매 기록 보관함 ({closedRecords.length})</h3>
@@ -596,6 +598,315 @@ function DashboardView({
   );
 }
 
+function SettingsView({ exchanges, onSave, Icons, userQuote, onSaveQuote }: any) {
+  const [localExchanges, setLocalExchanges] = useState(exchanges);
+  const [newEx, setNewEx] = useState({ name: '', makerFee: '0.02', takerFee: '0.05' });
+  const [quoteInput, setQuoteInput] = useState(userQuote);
+
+  useEffect(() => {
+    setQuoteInput(userQuote);
+  }, [userQuote]);
+
+  const handleAdd = () => {
+    if (!newEx.name) return;
+    const next = [...localExchanges, { ...newEx, id: Date.now().toString() }];
+    setLocalExchanges(next);
+    onSave(next);
+    setNewEx({ name: '', makerFee: '0.02', takerFee: '0.05' });
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm('이 거래소를 목록에서 삭제할까요?')) {
+      const next = localExchanges.filter((e: any) => e.id !== id);
+      setLocalExchanges(next);
+      onSave(next);
+    }
+  };
+
+  const handleUpdate = (id: string, field: string, value: string) => {
+    const next = localExchanges.map((e: any) => e.id === id ? { ...e, [field]: value } : e);
+    setLocalExchanges(next);
+  };
+
+  const handleBlur = () => {
+    onSave(localExchanges);
+  };
+
+  return (
+    <div className="space-y-6 animate-fade-in-up max-w-2xl mx-auto pb-20">
+      <h2 className="text-2xl font-bold text-gray-800 mb-6">환경 설정 ⚙️</h2>
+      
+      <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+        <h3 className="font-bold text-lg text-gray-700 mb-4 flex items-center gap-2">
+          <Icons.Quote size={20} className="text-rose-400"/> 메인 문구 설정
+        </h3>
+        <p className="text-xs text-gray-500 mb-4">
+          대시보드 상단에 표시될 나만의 다짐이나 명언을 적어보세요.
+        </p>
+        <div className="flex gap-2">
+          <input 
+            type="text"
+            value={quoteInput}
+            onChange={(e) => setQuoteInput(e.target.value)}
+            placeholder="기록이 쌓여 실력이 됩니다."
+            className="flex-1 bg-gray-50 rounded-xl px-4 py-3 text-sm outline-none border border-transparent focus:bg-white focus:border-rose-300 transition-colors"
+          />
+          <button 
+            onClick={() => onSaveQuote(quoteInput)}
+            className={`${APP_CONFIG.theme.primary} ${APP_CONFIG.theme.primaryHover} text-white px-6 rounded-xl font-bold text-sm shadow-md shadow-rose-200 transition-transform active:scale-95 whitespace-nowrap`}
+          >
+            저장
+          </button>
+        </div>
+      </div>
+
+      <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+        <h3 className="font-bold text-lg text-gray-700 mb-4 flex items-center gap-2">
+          <Icons.Fee size={20} className="text-rose-400"/> 거래소 및 수수료 관리
+        </h3>
+        <p className="text-xs text-gray-500 mb-6 leading-relaxed">
+          자주 사용하는 거래소와 수수료율(%)을 등록해두세요.<br/>매매 기록 시 자동 적용됩니다.
+        </p>
+        
+        <div className="space-y-4">
+          {localExchanges.map((ex: any) => (
+            <div key={ex.id} className="bg-gray-50 p-4 rounded-xl border border-gray-100 relative">
+              <button 
+                onClick={() => handleDelete(ex.id)} 
+                className="absolute top-2 right-2 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+              >
+                <Icons.Delete size={16} />
+              </button>
+
+              <div className="flex flex-col md:flex-row gap-4 md:items-end">
+                <div className="flex-1">
+                  <label className="text-[10px] text-gray-400 font-bold mb-1 block ml-1">거래소명</label>
+                  <input 
+                    type="text" 
+                    value={ex.name} 
+                    onChange={(e) => handleUpdate(ex.id, 'name', e.target.value)}
+                    onBlur={handleBlur}
+                    className="w-full bg-white border-b-2 border-gray-200 focus:border-rose-400 px-3 py-2 outline-none text-sm font-bold text-gray-700 rounded-t-lg transition-colors"
+                  />
+                </div>
+
+                <div className="flex gap-3 w-full md:w-auto">
+                  <div className="flex-1">
+                    <span className="text-[10px] text-gray-400 font-bold mb-1 block ml-1">Maker(%)</span>
+                    <input 
+                      type="number" 
+                      step="0.01"
+                      value={ex.makerFee} 
+                      onChange={(e) => handleUpdate(ex.id, 'makerFee', e.target.value)}
+                      onBlur={handleBlur}
+                      className="w-full bg-white rounded-lg border border-gray-200 px-3 py-2 text-sm text-center outline-none focus:border-rose-300 font-mono"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <span className="text-[10px] text-gray-400 font-bold mb-1 block ml-1">Taker(%)</span>
+                    <input 
+                      type="number" 
+                      step="0.01"
+                      value={ex.takerFee} 
+                      onChange={(e) => handleUpdate(ex.id, 'takerFee', e.target.value)}
+                      onBlur={handleBlur}
+                      className="w-full bg-white rounded-lg border border-gray-200 px-3 py-2 text-sm text-center outline-none focus:border-rose-300 font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-6 pt-6 border-t border-dashed border-gray-200">
+          <p className="text-xs font-bold text-rose-400 mb-3 ml-1">새로운 거래소 추가</p>
+          <div className="flex flex-col md:flex-row gap-3 items-end">
+             <div className="w-full md:flex-1">
+               <input 
+                 placeholder="예: Bitget"
+                 value={newEx.name}
+                 onChange={(e) => setNewEx({...newEx, name: e.target.value})}
+                 className="w-full bg-gray-50 rounded-xl px-4 py-3 text-sm outline-none border border-transparent focus:bg-white focus:border-rose-300 transition-colors"
+               />
+             </div>
+             <div className="flex gap-2 w-full md:w-auto">
+               <div className="flex-1 md:w-20">
+                 <input 
+                   type="number" step="0.01"
+                   placeholder="Mk"
+                   value={newEx.makerFee}
+                   onChange={(e) => setNewEx({...newEx, makerFee: e.target.value})}
+                   className="w-full bg-gray-50 rounded-xl px-3 py-3 text-sm outline-none border border-transparent focus:bg-white focus:border-rose-300 transition-colors text-center"
+                 />
+               </div>
+               <div className="flex-1 md:w-20">
+                 <input 
+                   type="number" step="0.01"
+                   placeholder="Tk"
+                   value={newEx.takerFee}
+                   onChange={(e) => setNewEx({...newEx, takerFee: e.target.value})}
+                   className="w-full bg-gray-50 rounded-xl px-3 py-3 text-sm outline-none border border-transparent focus:bg-white focus:border-rose-300 transition-colors text-center"
+                 />
+               </div>
+               <button 
+                onClick={handleAdd} 
+                className={`${APP_CONFIG.theme.primary} ${APP_CONFIG.theme.primaryHover} text-white p-3 rounded-xl transition-transform active:scale-95 shadow-md shadow-rose-200 flex-shrink-0`}
+               >
+                 <Icons.Add size={20} />
+               </button>
+             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatsView({ records, Icons }: any) {
+  const closed = records.filter((r: any) => r.status === 'Closed');
+  const wins = closed.filter((r: any) => r.pnl > 0).length;
+  const total = closed.length;
+  const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
+  
+  const totalNetPnl = closed.reduce((acc: number, cur: any) => acc + (parseFloat(cur.realizedPnlValue) || 0), 0);
+  const totalFees = closed.reduce((acc: number, cur: any) => acc + (parseFloat(cur.fees) || 0), 0);
+
+  return (
+    <div className="space-y-6 animate-fade-in-up">
+      <h2 className="text-2xl font-bold text-gray-800 mb-6">나의 트레이딩 성적표 📊</h2>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard label="총 매매" value={`${total}회`} icon={<Icons.Dashboard size={18} />} color="bg-blue-50 text-blue-600" />
+        <StatCard label="승률" value={`${winRate}%`} icon={<Icons.Up size={18} />} color="bg-rose-50 text-rose-600" />
+        <StatCard label="순수익(Net)" value={`$${formatNumber(totalNetPnl)}`} icon={<Icons.Profit size={18} />} color={totalNetPnl >= 0 ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"} />
+        <StatCard label="총 수수료" value={`$${formatNumber(totalFees)}`} icon={<Icons.Fee size={18} />} color="bg-gray-100 text-gray-600" />
+      </div>
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 text-center text-gray-400 text-sm">
+        상세 통계 준비 중...
+      </div>
+    </div>
+  );
+}
+
+function StrategiesView({ strategies }: any) {
+  return (
+    <div className="space-y-6 animate-fade-in-up">
+      <h2 className="text-2xl font-bold text-gray-800">나의 매매 전략 노트 📝</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {strategies.map((s: any, idx: number) => (
+          <div key={idx} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-rose-300 transition-all">
+            <h3 className="font-bold text-lg text-rose-500 mb-2">{s.title}</h3>
+            <p className="text-gray-600 text-sm leading-relaxed">{s.description}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ label, value, icon, color }: any) {
+  return (
+    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-2">
+      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${color} mb-1`}>{icon}</div>
+      <span className="text-gray-400 text-xs">{label}</span>
+      <span className="text-xl font-bold text-gray-800">{value}</span>
+    </div>
+  );
+}
+
+function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons }: any) {
+  const isLong = record.position === 'Long';
+  return (
+    <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-lg transition-all relative group">
+      <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+        <button onClick={() => onEdit(record)} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-400 hover:text-rose-500"><Icons.Edit size={14} /></button>
+        <button onClick={() => onDelete(record)} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-400 hover:text-red-500"><Icons.Delete size={14} /></button>
+      </div>
+
+      <div className="flex items-center justify-between mb-4">
+        <span className={`text-xs font-bold px-2 py-1 rounded-md ${isLong ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+          {record.position.toUpperCase()} x{record.leverage}
+        </span>
+        <div className="flex items-center gap-2">
+          {record.exchange && <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">{record.exchange}</span>}
+          <span className="text-xs text-gray-400">{record.openDate.split('T')[0]}</span>
+        </div>
+      </div>
+
+      <h3 className="font-bold text-lg text-gray-800 mb-1 flex items-center gap-2">
+        <HighlightText text={record.symbol} highlight={searchTerm} />
+      </h3>
+      <div className={`${APP_CONFIG.theme.secondaryBg} text-xs ${APP_CONFIG.theme.accent} mb-4 inline-block px-2 py-0.5 rounded`}>
+         <HighlightText text={record.strategy || '전략 없음'} highlight={searchTerm} />
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 text-sm">
+        <div>
+          <div className="text-gray-400 text-xs">진입가</div>
+          <div className="font-mono font-medium">{formatNumber(record.entryPrice)}</div>
+        </div>
+        <div>
+          <div className="text-gray-400 text-xs">Margin</div>
+          <div className="font-mono font-medium">${formatNumber(record.margin)}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function HistoryRow({ record, onEdit, onDelete, HighlightText, searchTerm, Icons }: any) {
+  const isProfit = record.pnl > 0;
+  return (
+    <div className="bg-white p-4 rounded-xl border border-gray-100 hover:border-rose-200 transition-all flex flex-col md:flex-row md:items-center gap-4 group">
+      <div className="flex justify-between items-center md:hidden">
+        <span className="text-xs text-gray-400">{record.openDate.split('T')[0]}</span>
+        <div className="flex gap-2">
+           <button onClick={() => onEdit(record)} className="text-gray-400"><Icons.Edit size={14} /></button>
+           <button onClick={() => onDelete(record)} className="text-gray-400"><Icons.Delete size={14} /></button>
+        </div>
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${record.position === 'Long' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+            {record.position.charAt(0)}
+          </span>
+          <h4 className="font-bold text-gray-700 truncate w-24 md:w-auto">
+            <HighlightText text={record.symbol} highlight={searchTerm} />
+          </h4>
+          <span className="text-xs text-gray-400">x{record.leverage}</span>
+          {record.exchange && <span className="text-[10px] text-gray-400 border border-gray-100 px-1 rounded ml-1 hidden md:inline">{record.exchange}</span>}
+        </div>
+        <div className="text-xs text-gray-500 flex flex-wrap items-center gap-2">
+          <span>{record.strategy}</span>
+          {record.exitReason && <span className="bg-gray-100 px-1 rounded text-[10px] text-gray-400">{record.exitReason}</span>}
+          {record.exitMemo && <span className={`${APP_CONFIG.theme.accent} text-[10px] truncate max-w-[150px]`}>💬 {record.exitMemo}</span>}
+        </div>
+      </div>
+
+      <div className="flex justify-between md:justify-end items-center gap-6 md:w-1/2">
+        <div className="text-right">
+          <div className="text-[10px] text-gray-400">PNL %</div>
+          <div className={`font-bold font-mono ${isProfit ? 'text-green-500' : 'text-red-500'}`}>
+            {record.pnl > 0 ? '+' : ''}{record.pnl}%
+          </div>
+        </div>
+        <div className="text-right w-20">
+          <div className="text-[10px] text-gray-400">순수익($)</div>
+          <div className={`font-bold font-mono text-sm ${isProfit ? 'text-green-500' : 'text-red-500'}`}>
+            ${formatNumber(record.realizedPnlValue)}
+          </div>
+          {record.fees > 0 && <div className="text-[9px] text-gray-300">수수료 -${record.fees}</div>}
+        </div>
+        <div className="hidden md:flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+           <button onClick={() => onEdit(record)} className="p-2 hover:bg-rose-50 rounded-full text-gray-400 hover:text-rose-500"><Icons.Edit size={16} /></button>
+           <button onClick={() => onDelete(record)} className="p-2 hover:bg-rose-50 rounded-full text-gray-400 hover:text-red-500"><Icons.Delete size={16} /></button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // [NEW] 커스텀 토글 컴포넌트
 function ToggleSwitch({ options, value, onChange }: { options: string[], value: string, onChange: (val: string) => void }) {
   return (
@@ -620,16 +931,16 @@ function ToggleSwitch({ options, value, onChange }: { options: string[], value: 
 function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exchanges, existingSymbols, Icons }: any) {
   const [formData, setFormData] = useState({
     symbol: '',
-    exchange: exchanges[0]?.name || '', 
+    exchange: exchanges[0]?.name || '', // Default exchange
     position: 'Long',
     leverage: '1',
     margin: '',
     entryPrice: '',
-    entryType: 'Maker', 
+    entryType: 'Maker', // Maker or Taker
     openDate: getCurrentDateTimeString(),
     status: 'Open',
     closePrice: '',
-    exitType: 'Taker', 
+    exitType: 'Taker', // Maker or Taker
     exitReason: '',
     closeDate: '',
     strategy: strategies[0]?.title || '',
@@ -683,7 +994,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm animate-fade-in">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto custom-scrollbar">
-        <div className="sticky top-0 bg-white z-10 px-6 py-4 border-b border-rose-100 flex justify-between items-center">
+        <div className="sticky top-0 bg-white z-10 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
           <h3 className="font-bold text-xl text-gray-800">{initialData ? '매매 기록 수정 ✏️' : '새 매매 기록 🌱'}</h3>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full"><Icons.Close size={20} className="text-gray-400"/></button>
         </div>
@@ -734,7 +1045,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
           </div>
 
           {/* Entry Info */}
-          <div className="bg-blue-50/50 p-4 rounded-2xl space-y-3">
+          <div className="bg-gray-50 p-4 rounded-2xl space-y-3">
              <div className="flex justify-between items-center mb-1">
                 <span className="text-xs font-bold text-blue-400">진입 정보</span>
                 {/* [NEW] 커스텀 토글 적용 */}
@@ -769,7 +1080,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
           </div>
 
           {/* Exit Info */}
-          <div className="border-t border-dashed border-rose-200 my-2"></div>
+          <div className="border-t border-dashed border-gray-200 my-2"></div>
           <div className="space-y-4">
              <div className="flex justify-between items-center">
                <span className="text-sm font-bold text-gray-700">청산 정보 (선택)</span>
@@ -785,7 +1096,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
              </div>
              
              {formData.status === 'Closed' && (
-               <div className="animate-fade-in space-y-3 p-4 bg-rose-50/50 rounded-2xl">
+               <div className="animate-fade-in space-y-3 p-4 bg-gray-50 rounded-2xl">
                  <div className="flex justify-between items-center mb-1">
                     <span className="text-xs font-bold text-rose-400">청산 세부</span>
                     {/* [NEW] 커스텀 토글 적용 */}
