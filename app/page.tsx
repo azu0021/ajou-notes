@@ -34,7 +34,7 @@ import {
   Trash2,
   Edit2,
   X,
-  pin,
+  Pin,
   Star,
   ChevronDown,
   TrendingUp,
@@ -65,7 +65,7 @@ theme: {
     cardBg: 'bg-white',
     
     // [Text Main] 기본 글자 색상 (진한 회색)
-    textMain: 'text-zin-700',
+    textMain: 'text-zinc-700',
     
     // [Text Sub] 보조 글자 색상 (연한 회색 - 설명, 날짜 등)
     textSub: 'text-gray-500',
