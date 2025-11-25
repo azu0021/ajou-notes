@@ -174,6 +174,10 @@ export default function Home() {
   const [viewMode, setViewMode] = useState<'records' | 'strategies'>('records');
   const [selectedStrategyForFilter, setSelectedStrategyForFilter] = useState<string | null>(null);
   const [selectedRecordForDetail, setSelectedRecordForDetail] = useState<any>(null);
+  const selectedStrategy =
+  selectedRecordForDetail?.strategyId
+    ? strategies.find((s: any) => s.id === selectedRecordForDetail.strategyId) ?? null
+    : null;
 
   const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
   const [isStrategyModalOpen, setIsStrategyModalOpen] = useState(false);
@@ -981,25 +985,26 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="mt-3 flex flex-col gap-2 rounded-xl bg-amber-50/50 p-3 text-xs border border-amber-100">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-[11px] text-amber-600 font-medium">
-                        <BookOpen size={13} />
-                        <span>연결된 전략</span>
-                      </div>
-                      {selectedRecord && (
-                        <span className="rounded-md bg-white px-2 py-0.5 text-[10px] text-amber-500 font-medium shadow-sm">
-                          {selectedRecord.title}
-                        </span>
-                      )}
-                    </div>
-                    {selectedRecord ? (
-                      <p className="whitespace-pre-line text-[11px] text-gray-600">{selectedRecord.description}</p>
-                    ) : (
-                      <p className="text-[11px] text-gray-400">연결된 전략이 없어요.</p>
-                    )}
-                  </div>
-
+                  <div className="mt-3 flex flex-col gap-2 rounded-xl bg-amber-50/50 p-3 text-xs border border-amber-100">https://github.com/azu0021/ajou-notes/blob/main/app/page.tsx
+  <div className="flex items-center justify-between">
+    <div className="flex items-center gap-2 text-[11px] text-amber-600 font-medium">
+      <BookOpen size={13} />
+      <span>연결된 전략</span>
+    </div>
+    {selectedStrategy && (
+      <span className="rounded-md bg-white px-2 py-0.5 text-[10px] text-amber-500 font-medium shadow-sm">
+        {selectedStrategy.title}
+      </span>
+    )}
+  </div>
+  {selectedStrategy ? (
+    <p className="whitespace-pre-line text-[11px] text-gray-600">
+      {selectedStrategy.description}
+    </p>
+  ) : (
+    <p className="text-[11px] text-gray-400">연결된 전략이 없어요.</p>
+  )}
+</div>
                   <div className="mt-3 flex flex-1 flex-col">
                     <div className="mb-1 flex items-center justify-between">
                       <div className="flex items-center gap-2 text-[11px] text-gray-400">
