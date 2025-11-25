@@ -660,7 +660,7 @@ function SettingsView({ exchanges, onSave, Icons, userQuote, onSaveQuote }: any)
 
   return (
     <div className="space-y-6 animate-fade-in-up max-w-2xl mx-auto pb-20">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">환경 설정 ⚙️</h2>
+      <h2 className="text-2xl font-bold text-zinc-700 mb-6">환경 설정 ⚙️</h2>
       
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
         <h3 className="font-bold text-lg text-gray-700 mb-4 flex items-center gap-2">
@@ -800,7 +800,7 @@ function StatsView({ records, Icons }: any) {
 
   return (
     <div className="space-y-6 animate-fade-in-up">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">나의 트레이딩 성적표 📊</h2>
+      <h2 className="text-2xl font-bold text-zinc-700 mb-6">나의 트레이딩 성적표</h2>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard label="총 매매" value={`${total}회`} icon={<Icons.Dashboard size={18} />} color="bg-blue-50 text-blue-600" />
         <StatCard label="승률" value={`${winRate}%`} icon={<Icons.Up size={18} />} color="bg-rose-50 text-rose-600" />
@@ -817,7 +817,7 @@ function StatsView({ records, Icons }: any) {
 function StrategiesView({ strategies }: any) {
   return (
     <div className="space-y-6 animate-fade-in-up">
-      <h2 className="text-2xl font-bold text-gray-800">나의 매매 전략 노트 📝</h2>
+      <h2 className="text-2xl font-bold text-zinc-700">나의 매매 전략 노트</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {strategies.map((s: any, idx: number) => (
           <div key={idx} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-rose-300 transition-all">
@@ -835,7 +835,7 @@ function StatCard({ label, value, icon, color }: any) {
     <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-2">
       <div className={`w-8 h-8 rounded-full flex items-center justify-center ${color} mb-1`}>{icon}</div>
       <span className="text-gray-400 text-xs">{label}</span>
-      <span className="text-xl font-bold text-gray-800">{value}</span>
+      <span className="text-xl font-bold text-zinc-700">{value}</span>
     </div>
   );
 }
@@ -859,7 +859,7 @@ function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons 
         </div>
       </div>
 
-      <h3 className="font-bold text-lg text-gray-800 mb-1 flex items-center gap-2">
+      <h3 className="font-bold text-lg text-zinc-700 mb-1 flex items-center gap-2">
         <HighlightText text={record.symbol} highlight={searchTerm} />
       </h3>
       <div className={`${APP_CONFIG.theme.secondaryBg} text-xs ${APP_CONFIG.theme.accent} mb-4 inline-block px-2 py-0.5 rounded`}>
@@ -1021,7 +1021,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm animate-fade-in">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto custom-scrollbar">
         <div className="sticky top-0 bg-white z-10 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-          <h3 className="font-bold text-xl text-gray-800">{initialData ? '매매 기록 수정 ✏️' : '새 매매 기록 🌱'}</h3>
+          <h3 className="font-bold text-xl text-zinc-700">{initialData ? '매매 기록 수정' : '새 매매 기록'}</h3>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full"><Icons.Close size={20} className="text-gray-400"/></button>
         </div>
         
@@ -1193,7 +1193,7 @@ function DeleteConfirmModal({ target, onClose, onConfirm, Icons }: any) {
         <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
           <Icons.Delete size={24} />
         </div>
-        <h3 className="font-bold text-lg text-gray-800 mb-2">기록을 삭제할까요?</h3>
+        <h3 className="font-bold text-lg text-zinc-700 mb-2">기록을 삭제할까요?</h3>
         <p className="text-gray-500 text-sm mb-6">
           <span className="font-bold text-gray-700">{target.symbol}</span> 매매 기록이 영구적으로 삭제됩니다.
         </p>
