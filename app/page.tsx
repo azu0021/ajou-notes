@@ -1057,16 +1057,16 @@ function ToggleSwitch({ options, value, onChange }: { options: string[], value: 
 function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exchanges, existingSymbols, Icons }: any) {
   const [formData, setFormData] = useState({
     symbol: '',
-    exchange: exchanges[0]?.name || '', // Default exchange
+    exchange: exchanges[0]?.name || '',
     position: 'Long',
     leverage: '1',
     margin: '',
     entryPrice: '',
-    entryType: 'Maker', // Maker or Taker
+    entryType: 'Maker',
     openDate: getCurrentDateTimeString(),
     status: 'Open',
     closePrice: '',
-    exitType: 'Taker', // Maker or Taker
+    exitType: 'Taker',
     exitReason: '',
     closeDate: '',
     strategy: strategies[0]?.title || '',
@@ -1128,7 +1128,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
           {/* Exchange & Symbol */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              {/* 1. 원래 있던 <label>과 <select> 관련 코드는 다 지우고 이 한 덩어리만 남기면 돼요! */}
+              {/* [수정됨] CustomSelect로 깔끔하게 교체 */}
               <CustomSelect 
                 label="거래소" 
                 name="exchange" 
@@ -1138,24 +1138,6 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                 icon={Icons.Down} 
               />
             </div>
-            
-            {/* 2. 옆에 종목명(Symbol) 입력칸은 그대로 둡니다 */}
-            <div>
-              <label className="block text-xs font-bold text-zinc-500 mb-1">종목명</label>
-              <input 
-                list="symbol-list"
-                name="symbol"
-                value={formData.symbol}
-                onChange={(e) => setFormData({...formData, symbol: e.target.value.toUpperCase()})}
-                placeholder="BTC"
-                className="w-full p-2.5 bg-zinc-50 rounded-xl border border-transparent focus:bg-white focus:border-rose-300 focus:outline-none text-sm font-bold uppercase"
-                required
-              />
-              <datalist id="symbol-list">
-                {existingSymbols.map((sym: string) => <option key={sym} value={sym} />)}
-              </datalist>
-            </div>
-          </div>
             <div>
               <label className="block text-xs font-bold text-zinc-500 mb-1">종목명</label>
               <input 
@@ -1183,17 +1165,16 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                 </div>
              </div>
              <div className="w-1/2">
-                <FormInput label="증거금" name="margin" type="number" value={formData.margin} onChange={handleChange} placeholder="$" />
+                <FormInput label="증거금 (Margin $)" name="margin" type="number" value={formData.margin} onChange={handleChange} placeholder="$" />
              </div>
           </div>
 
           {/* Entry Info */}
           <div className="bg-zinc-50 p-4 rounded-2xl space-y-3">
              <div className="flex justify-between items-center mb-1">
-                <span className="text-xs font-bold text-rose-400">진입 정보</span>
-                {/* [NEW] 커스텀 토글 적용 */}
+                <span className="text-xs font-bold text-blue-400">진입 정보</span>
                 <ToggleSwitch 
-                  options={['Maket', 'Limit']} 
+                  options={['Maker', 'Taker']} 
                   value={formData.entryType} 
                   onChange={(val) => setFormData({...formData, entryType: val})} 
                 />
@@ -1204,21 +1185,25 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
              </div>
              <FormInput label="오픈 시간" name="openDate" type="datetime-local" value={formData.openDate} onChange={handleChange} />
              <div>
-               <label className="block text-xs font-bold text-zinc-500 mb-1">전략 & 근거</label>
-               <div className="flex gap-2 mb-2">
-                 <select name="strategy" value={formData.strategy} onChange={handleChange} className="w-1/2 p-2 bg-white rounded-xl border border-blue-100 text-xs outline-none">
-                   <option value="">전략 선택</option>
-                   {strategies.map((s: any) => <option key={s.id} value={s.title}>{s.title}</option>)}
-                   <option value="기타">기타</option>
-                 </select>
+               {/* [수정됨] CustomSelect로 교체 */}
+               <CustomSelect 
+                 label="전략 & 근거"
+                 name="strategy"
+                 value={formData.strategy}
+                 onChange={handleChange}
+                 options={strategies}
+                 placeholder="전략 선택"
+                 icon={Icons.Down}
+               />
+               <div className="mt-3">
+                 <textarea 
+                    name="entryMemo"
+                    value={formData.entryMemo}
+                    onChange={handleChange}
+                    placeholder="진입 근거 메모..."
+                    className="w-full p-3 bg-white rounded-xl border border-zinc-200 focus:border-rose-300 outline-none text-sm resize-none h-20 placeholder-zinc-300"
+                  />
                </div>
-               <textarea 
-                  name="entryMemo"
-                  value={formData.entryMemo}
-                  onChange={handleChange}
-                  placeholder="진입 근거 메모..."
-                  className="w-full p-2 bg-white rounded-xl border border-blue-100 text-xs resize-none h-16 outline-none"
-                />
              </div>
           </div>
 
@@ -1232,9 +1217,9 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                    type="checkbox" 
                    checked={formData.status === 'Closed'} 
                    onChange={handleStatusChange} 
-                   className="w-5 h-5 rounded text-rose-400 focus:ring-rose-400 accent-rose-400 cursor-pointer"
+                   className="w-5 h-5 rounded text-rose-500 focus:ring-rose-400 accent-rose-500 cursor-pointer"
                  />
-                 <span className={`text-xs ${formData.status === 'Closed' ? 'text-rose-400 font-bold' : 'text-zinc-500'}`}>포지션 종료됨</span>
+                 <span className={`text-xs ${formData.status === 'Closed' ? 'text-rose-500 font-bold' : 'text-zinc-500'}`}>포지션 종료됨</span>
                </label>
              </div>
              
@@ -1242,9 +1227,8 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                <div className="animate-fade-in space-y-3 p-4 bg-zinc-50 rounded-2xl">
                  <div className="flex justify-between items-center mb-1">
                     <span className="text-xs font-bold text-rose-400">청산 세부</span>
-                    {/* [NEW] 커스텀 토글 적용 */}
                     <ToggleSwitch 
-                      options={['Maket', 'Limit']} 
+                      options={['Maker', 'Taker']} 
                       value={formData.exitType} 
                       onChange={(val) => setFormData({...formData, exitType: val})} 
                     />
@@ -1345,7 +1329,6 @@ function NavButton({ icon, label, active, onClick }: any) {
 }
 
 
-// [NEW] 예쁜 드롭다운 컴포넌트
 function CustomSelect({ label, value, onChange, options, placeholder, name, icon: Icon }: any) {
   return (
     <div>
@@ -1358,7 +1341,6 @@ function CustomSelect({ label, value, onChange, options, placeholder, name, icon
           className="w-full bg-zinc-50 rounded-xl px-4 py-3 pr-10 text-sm font-bold text-zinc-700 outline-none border border-transparent focus:bg-white focus:border-rose-300 transition-colors appearance-none cursor-pointer"
         >
           {placeholder && <option value="" disabled>{placeholder}</option>}
-          {/* 옵션이 객체인지 문자열인지 확인하여 처리 */}
           {options.map((opt: any) => {
             const val = typeof opt === 'object' ? (opt.name || opt.title) : opt;
             const text = typeof opt === 'object' ? (opt.name || opt.title) : opt;
@@ -1367,7 +1349,6 @@ function CustomSelect({ label, value, onChange, options, placeholder, name, icon
           })}
         </select>
         
-        {/* 커스텀 화살표 아이콘 (위치 조정됨) */}
         <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400">
           {Icon ? <Icon size={16} /> : <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>}
         </div>
@@ -1375,5 +1356,3 @@ function CustomSelect({ label, value, onChange, options, placeholder, name, icon
     </div>
   );
 }
-
-
