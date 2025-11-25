@@ -98,16 +98,16 @@ const DEFAULT_EXCHANGES = [
  */
 // 1. 전역 변수 안전하게 가져오기 (TS 에러 방지용)
 const getEnvVar = (key: string) => {
-  if (typeof window !== 'undefined' && (window as any)[key]) {
+  if (typeof window !== 'undefined' && (window as any)[key] != null) {
     return (window as any)[key];
   }
   return undefined;
 };
 
-// 2. 환경에 따른 Config 선택
-// Canvas 환경이면 __firebase_config 사용, 아니면(Vercel 등) 사용자 하드코딩 Config 사용
-const envConfig = getEnvVar('__firebase_config');
-const firebaseConfig = envConfig ? JSON.parse(envConfig) : {
+// 2. Firebase 설정 안전하게 파싱
+const rawEnvConfig = getEnvVar('__firebase_config');
+
+let firebaseConfig: any = {
   apiKey: "AIzaSyApCBDZtKlXoeclGosSDwYGrZxmLlvRHc4",
   authDomain: "berry-log.firebaseapp.com",
   projectId: "berry-log",
@@ -117,24 +117,43 @@ const firebaseConfig = envConfig ? JSON.parse(envConfig) : {
   measurementId: "G-EZEWGTX337"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-// Analytics (브라우저 환경에서만)
-if (typeof window !== 'undefined') {
+if (rawEnvConfig) {
   try {
-    getAnalytics(app);
+    // 문자열이면 JSON.parse, 객체면 그대로 사용
+    if (typeof rawEnvConfig === "string") {
+      firebaseConfig = JSON.parse(rawEnvConfig);
+    } else if (typeof rawEnvConfig === "object") {
+      firebaseConfig = rawEnvConfig;
+    }
   } catch (e) {
-    console.log("Analytics init skipped");
+    console.error("Failed to parse __firebase_config, using default config.", e);
   }
 }
 
-// 3. App ID 설정 (데이터 경로용)
+// 3. Firebase 초기화 (예외 안전)
+let app: any = null;
+let auth: any = null;
+let db: any = null;
+
+try {
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+
+  if (typeof window !== "undefined") {
+    try {
+      getAnalytics(app);
+    } catch {
+      console.log("Analytics init skipped");
+    }
+  }
+} catch (e) {
+  console.error("Firebase init error:", e);
+}
+
+// 4. App ID / 초기 토큰
 const envAppId = getEnvVar('__app_id');
 const appId = envAppId || 'very-daily-log';
-
-// 4. 초기 인증 토큰 (Canvas 환경용)
 const initialAuthToken = getEnvVar('__initial_auth_token');
 
 // 날짜 포맷팅
@@ -160,6 +179,14 @@ const formatNumber = (num: any) => {
  * ------------------------------------------------------------------
  */
 export default function VeryDailyLog() {
+   // Firebase 초기화 실패 시
+  if (!auth || !db) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-rose-50 text-rose-500">
+        Firebase 설정 오류 때문에 페이지를 표시할 수 없다.
+      </div>
+    );
+  }
   const [user, setUser] = useState<any>(null);
   const [records, setRecords] = useState<any[]>([]);
   const [strategies, setStrategies] = useState(DEFAULT_STRATEGIES);
