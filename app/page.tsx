@@ -907,7 +907,7 @@ function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons 
       {/* 수정/삭제 버튼 */}
       <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
         <button onClick={() => onEdit(record)} className="p-1.5 bg-white shadow-sm border border-zinc-100 rounded-full text-zinc-400 hover:text-rose-500"><Icons.Edit size={14} /></button>
-        <button onClick={() => onDelete(record)} className="p-1.5 bg-white shadow-sm border border-zinc-100 rounded-full text-zinc-400 hover:text-red-500"><Icons.Delete size={14} /></button>
+        <button onClick={() => onDelete(record)} className="p-1.5 bg-white shadow-sm border border-zinc-100 rounded-full text-zinc-400 hover:text-rose-500"><Icons.Delete size={14} /></button>
       </div>
 
       {/* 헤더 영역 수정됨 */}
