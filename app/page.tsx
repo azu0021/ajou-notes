@@ -947,13 +947,13 @@ function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons 
           </h3>
 
           {/* 포지션 뱃지 */}
-          <span className={`px-2 py-1 rounded-lg text-[11px] font-bold tracking-tight whitespace-nowrap ${isLong ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+          <span className={`px-2 py-1 rounded-lg text-[11px] font-bold tracking-tight whitespace-nowrap ${isLong ? 'bg-zinc-100 text-grin-400' : 'bg-zinc-100 text-rose-400'}`}>
             {record.position.toUpperCase()} x{record.leverage}
           </span>
 
           {/* 전략 뱃지 */}
           {record.strategy && (
-             <span className="bg-rose-50 text-rose-400 px-2 py-1 rounded-lg text-[11px] font-bold tracking-tight whitespace-nowrap truncate max-w-[100px]">
+             <span className="bg-zinc-100 text-rose-400 px-2 py-1 rounded-lg text-[11px] font-bold tracking-tight whitespace-nowrap truncate max-w-[100px]">
                <HighlightText text={record.strategy} highlight={searchTerm} />
              </span>
           )}
@@ -963,13 +963,13 @@ function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons 
         <div className="flex items-baseline gap-5">
           <div className="flex items-baseline gap-1.5">
             <span className="text-zinc-400 text-xs font-bold">진입가</span>
-            <span className="font-mono text-lg font-bold text-zinc-800 tracking-tight">
+            <span className="font-mono text-lg font-bold text-zinc-700 tracking-tight">
               {formatNumber(record.entryPrice)}
             </span>
           </div>
           <div className="flex items-baseline gap-1.5">
             <span className="text-zinc-300 text-xs font-medium">Margin</span>
-            <span className="font-mono text-lg font-bold text-zinc-800 tracking-tight">
+            <span className="font-mono text-lg font-bold text-zinc-700 tracking-tight">
               ${formatNumber(record.margin)}
             </span>
           </div>
