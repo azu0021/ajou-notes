@@ -1,43 +1,107 @@
-'use client';
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
+import { getAnalytics } from 'firebase/analytics'; // Analytics 추가
 import {
   getAuth,
   signInAnonymously,
   onAuthStateChanged,
+  signInWithCustomToken
 } from 'firebase/auth';
 import {
   getFirestore,
   collection,
+  query,
+  orderBy,
+  onSnapshot,
   addDoc,
   updateDoc,
   deleteDoc,
   doc,
-  query,
-  orderBy,
-  onSnapshot,
-  serverTimestamp,
+  setDoc,
+  getDoc,
+  serverTimestamp
 } from 'firebase/firestore';
+// 1. 사용할 아이콘들을 모두 불러옵니다.
 import {
+  LayoutDashboard,
+  PieChart,
+  BookOpen,
+  Settings,
   Plus,
   Search,
+  Download,
   Trash2,
   Edit2,
-  Download,
-  TrendingUp,
-  Clock,
-  Target,
-  BookOpen,
-  PieChart,
-  List,
   X,
-  Save,
-  DollarSign,
+  ChevronDown,
+  TrendingUp,
+  TrendingDown,
+  Building2,
+  Coins,
+  ArrowRightLeft
 } from 'lucide-react';
 
-// Firebase 설정 (기존 설정 유지)
-const firebaseConfig = {
+/**
+ * ------------------------------------------------------------------
+ * [앱 설정 및 테마 - 여기서 모든 디자인을 관리하세요!]
+ * 폰트: Red Hat Display (영문/숫자) + Pretendard (한글)
+ * ------------------------------------------------------------------
+ */
+const APP_CONFIG = {
+  // 1. 색상 테마 (Tailwind CSS 클래스)
+  theme: {
+    primary: 'bg-rose-400',       // 메인 버튼, 포인트 컬러
+    primaryHover: 'hover:bg-rose-500', // 버튼 호버 시 색상
+    secondaryBg: 'bg-rose-50',    // 전체 배경색 (아주 연한 핑크)
+    cardBg: 'bg-white',           // 카드 배경색
+    textMain: 'text-gray-700',    // 기본 글자색
+    textSub: 'text-gray-500',     // 보조 글자색
+    accent: 'text-rose-500',      // 강조 글자색 (핑크)
+    highlight: 'bg-yellow-200',   // 검색 형광펜 효과
+  },
+  
+  // 2. 아이콘 매핑 (여기서 아이콘을 교체하면 앱 전체에 반영됩니다)
+  icons: {
+    Dashboard: LayoutDashboard, // 대시보드 탭
+    Stats: PieChart,            // 통계 탭
+    Strategies: BookOpen,       // 전략 탭
+    Settings: Settings,         // 설정 탭
+    Add: Plus,                  // 추가 버튼
+    Search: Search,             // 검색 아이콘
+    Export: Download,           // 엑셀 다운로드
+    Delete: Trash2,             // 삭제 (휴지통)
+    Edit: Edit2,                // 수정 (연필)
+    Close: X,                   // 닫기 (X)
+    Down: ChevronDown,          // 아래 화살표
+    Up: TrendingUp,             // 상승 (승률 등)
+    DownTrend: TrendingDown,    // 하락
+    Fee: Building2,             // 수수료/거래소
+    Profit: Coins,              // 수익금
+    Exchange: ArrowRightLeft,   // 거래소 아이콘
+  }
+};
+
+// 기본 전략 리스트
+const DEFAULT_STRATEGIES = [
+  { id: 'rsi_div', title: 'RSI 다이버전스', description: '과매수/과매도 구간에서 주가와 지표의 괴리를 이용한 매매' },
+  { id: 'breakout', title: '박스권 돌파', description: '오랜 횡보장을 강한 거래량으로 돌파할 때 진입' },
+  { id: 'bband', title: '볼린저 밴드', description: '밴드 하단 지지 또는 상단 저항 매매' },
+];
+
+// 기본 거래소 리스트
+const DEFAULT_EXCHANGES = [
+  { id: 'binance', name: 'Binance', makerFee: 0.02, takerFee: 0.05 },
+  { id: 'bybit', name: 'Bybit', makerFee: 0.01, takerFee: 0.06 },
+  { id: 'upbit', name: 'Upbit', makerFee: 0.05, takerFee: 0.05 },
+];
+
+/**
+ * ------------------------------------------------------------------
+ * [Firebase Init]
+ * ------------------------------------------------------------------
+ */
+// 런타임 환경(미리보기)에서는 주입된 설정을 사용하고, 아니면 아래 사용자 설정을 사용합니다.
+const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
   apiKey: "AIzaSyApCBDZtKlXoeclGosSDwYGrZxmLlvRHc4",
   authDomain: "berry-log.firebaseapp.com",
   projectId: "berry-log",
@@ -47,1358 +111,998 @@ const firebaseConfig = {
   measurementId: "G-EZEWGTX337"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
 const auth = getAuth(app);
-const appId = 'ajou-notes';
+const db = getFirestore(app);
+// Analytics 초기화 (환경에 따라 지원되지 않을 수 있으므로 try-catch 또는 조건부 처리)
+let analytics;
+try {
+  analytics = getAnalytics(app);
+} catch (e) {
+  console.log("Analytics not supported in this environment");
+}
 
+// 앱 데이터 격리를 위한 ID (Firebase Config의 appId와는 다름)
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-// --- Helper Functions ---
-const formatDate = (dateString: any) => {
+// 날짜 포맷
+const formatDate = (dateString) => {
   if (!dateString) return '-';
   const d = new Date(dateString);
-  return d.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 };
 
-const formatDateShort = (dateString: any) => {
-  if (!dateString) return '-';
-  const d = new Date(dateString);
-  return d.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+const getCurrentDateTimeString = () => {
+  const now = new Date();
+  return new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
 };
 
-const formatTimeDiff = (start: any, end: any) => {
-  if (!start || !end) return '-';
-  const diff = new Date(end).getTime() - new Date(start).getTime();
-  const hours = Math.floor(diff / (1000 * 60 * 60));
-  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  return `${hours}시간 ${minutes}분`;
+const formatNumber = (num) => {
+  if (num === '' || num === null || num === undefined) return '';
+  return Number(num).toLocaleString(undefined, { maximumFractionDigits: 2 });
 };
 
-const formatCurrency = (val: any) => {
-  if (!val && val !== 0) return '0';
-  return Number(val).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-};
+/**
+ * ------------------------------------------------------------------
+ * [메인 앱]
+ * ------------------------------------------------------------------
+ */
+export default function VeryDailyLog() {
+  const [user, setUser] = useState(null);
+  const [records, setRecords] = useState([]);
+  const [strategies, setStrategies] = useState(DEFAULT_STRATEGIES);
+  const [exchanges, setExchanges] = useState(DEFAULT_EXCHANGES);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('dashboard');
 
-// Search Highlighter Component
-const HighlightText = ({ text, highlight }: { text: any; highlight: any }) => {
-  if (!highlight || !highlight.trim()) {
-    return <span>{text}</span>;
-  }
-  const regex = new RegExp(`(${highlight})`, 'gi');
-  const parts = String(text).split(regex);
-  return (
-    <span>
-      {parts.map((part, i) =>
-        regex.test(part) ? (
-          <mark key={i} style={{ backgroundColor: '#FFF0F3', color: '#FF758F' }} className="rounded-sm px-0.5 font-bold">
-            {part}
-          </mark>
-        ) : (
-          <span key={i}>{part}</span>
-        ),
-      )}
-    </span>
-  );
-};
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
-// 1. 기본 모달 레이아웃
-const Modal = ({ isOpen, onClose, title, children }: any) => {
-  if (!isOpen) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-xl transform rounded-2xl bg-white shadow-2xl transition-all border border-gray-100">
-        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3">
-          <h2 className="text-sm font-bold text-gray-800">{title}</h2>
-          <button onClick={onClose} className="text-gray-400 transition-colors hover:text-gray-600">
-            <X size={20} />
-          </button>
-        </div>
-        <div className="p-5">{children}</div>
-      </div>
-    </div>
-  );
-};
-
-// 2. Custom Delete Confirmation
-const DeleteModal = ({ isOpen, onClose, onConfirm, title }: any) => {
-  if (!isOpen) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-sm transform rounded-2xl bg-white p-6 text-center shadow-xl transition-all border border-gray-100">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
-          <Trash2 className="text-red-400" size={24} />
-        </div>
-        <h3 className="mb-2 text-lg font-bold text-gray-900">삭제하시겠습니까?</h3>
-        <p className="mb-6 text-sm text-gray-500">
-          &quot;{title}&quot; 항목이 영구적으로 삭제됩니다.
-          <br />
-          이 작업은 되돌릴 수 없습니다.
-        </p>
-        <div className="flex justify-center gap-3">
-          <button
-            onClick={onClose}
-            className="rounded-xl border border-gray-200 px-5 py-2.5 font-medium text-gray-600 transition-colors hover:bg-gray-50"
-          >
-            취소
-          </button>
-          <button
-            onClick={onConfirm}
-            className="rounded-xl bg-red-400 px-5 py-2.5 font-medium text-white shadow-lg shadow-red-200 transition-all hover:bg-red-500"
-          >
-            삭제하기
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Main App Component
-export default function Home() {
-  const [user, setUser] = useState<any>(null);
-
-  const [records, setRecords] = useState<any[]>([]);
-  const [strategies, setStrategies] = useState<any[]>([]);
-  const [stats, setStats] = useState<any>({
-    winRate: 0,
-    avgProfit: 0,
-    totalTrades: 0,
-    totalPnl: 0,
-    longWinRate: 0,
-    shortWinRate: 0,
-    bestStrategy: '',
-    worstStrategy: '',
-  });
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState<'records' | 'strategies'>('records');
-  const [selectedStrategyForFilter, setSelectedStrategyForFilter] = useState<string | null>(null);
-  const [selectedRecordForDetail, setSelectedRecordForDetail] = useState<any>(null);
-  const selectedStrategy =
-  selectedRecordForDetail?.strategyId
-    ? strategies.find((s: any) => s.id === selectedRecordForDetail.strategyId) ?? null
-    : null;
+  const [selectedSymbol, setSelectedSymbol] = useState('ALL');
 
-  const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
-  const [isStrategyModalOpen, setIsStrategyModalOpen] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<any>(null);
-
-  // Form States
-  const initialRecordState = {
-    date: new Date().toISOString().slice(0, 16),
-    ticker: '',
-    position: 'Long',
-    margin: '',
-    leverage: 1,
-    entryPrice: '',
-    exitPrice: '',
-    exitReason: 'TP Hit',
-    profitPercent: '',
-    realizedPnl: '',
-    strategyId: '',
-    openDate: new Date().toISOString().slice(0, 16),
-    closeDate: '',
-    memo: '',
-  };
-  const [currentRecord, setCurrentRecord] = useState<any>(initialRecordState);
-  const [editingId, setEditingId] = useState<string | null>(null);
-
-  const [currentStrategy, setCurrentStrategy] = useState<any>({ title: '', description: '' });
-  const [editingStrategyId, setEditingStrategyId] = useState<string | null>(null);
+  // 아이콘 편의 변수
+  const Icons = APP_CONFIG.icons;
 
   // --- Auth & Data Loading ---
   useEffect(() => {
     const initAuth = async () => {
-      await signInAnonymously(auth);
+      if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+        await signInWithCustomToken(auth, __initial_auth_token);
+      } else {
+        await signInAnonymously(auth);
+      }
     };
     initAuth();
-    return onAuthStateChanged(auth, setUser);
+    
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+    });
+    return () => unsubscribe();
   }, []);
 
+  // 기록 데이터 로드
   useEffect(() => {
     if (!user) return;
-
-    // Load Records
-    const recordsRef = collection(db, 'artifacts', appId, 'users', user.uid, 'stock_records');
-    const qRecords = query(recordsRef, orderBy('created_at', 'desc'));
-    const unsubRecords = onSnapshot(
-      qRecords,
-      (snapshot: any) => {
-        const data = snapshot.docs.map((d: any) => ({ id: d.id, ...d.data() }));
-        setRecords(data);
-      },
-      (err) => console.error('Record error:', err),
+    setLoading(true);
+    const q = query(
+      collection(db, 'artifacts', appId, 'users', user.uid, 'stock_records'),
+      orderBy('openDate', 'desc')
     );
-
-    // Load Strategies
-    const strategiesRef = collection(db, 'artifacts', appId, 'users', user.uid, 'stock_strategies');
-    const qStrategies = query(strategiesRef, orderBy('created_at', 'desc'));
-    const unsubStrategies = onSnapshot(
-      qStrategies,
-      (snapshot: any) => {
-        const data = snapshot.docs.map((d: any) => ({ id: d.id, ...d.data() }));
-        setStrategies(data);
-      },
-      (err) => console.error('Strategy error:', err),
-    );
-
-    return () => {
-      unsubRecords();
-      unsubStrategies();
-    };
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setRecords(data);
+      setLoading(false);
+    }, (error) => {
+      console.error("Data fetch error:", error);
+      setLoading(false);
+    });
+    return () => unsubscribe();
   }, [user]);
 
-  // --- Logic: Calculations ---
-  const calculateMetrics = (data: any) => {
-    const entry = parseFloat(data.entryPrice);
-    const exit = parseFloat(data.exitPrice);
-    const lev = parseFloat(data.leverage);
-    const margin = parseFloat(data.margin);
+  // 설정(거래소 등) 데이터 로드
+  useEffect(() => {
+    if (!user) return;
+    const fetchSettings = async () => {
+      try {
+        const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'config');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data.exchanges) setExchanges(data.exchanges);
+        }
+      } catch (e) {
+        console.error("Settings fetch error", e);
+      }
+    };
+    fetchSettings();
+  }, [user]);
 
-    if (!entry || !exit || !lev || !margin) return { percent: '', amount: '' };
-
-    let pnlPercent = 0;
-    if (data.position === 'Long') {
-      pnlPercent = ((exit - entry) / entry) * 100 * lev;
-    } else {
-      pnlPercent = ((entry - exit) / entry) * 100 * lev;
-    }
-
-    let pnlAmount = '';
-    if (margin) {
-      pnlAmount = ((margin * pnlPercent) / 100).toFixed(2);
-    }
-
-    return { percent: pnlPercent.toFixed(2), amount: pnlAmount };
-  };
-
-  const handleRecordChange = (e: any) => {
-    const { name, value } = e.target;
-    let updatedRecord = { ...currentRecord, [name]: value };
-
-    if (['entryPrice', 'exitPrice', 'leverage', 'position', 'margin'].includes(name)) {
-      updatedRecord[name] = name === 'position' ? value : parseFloat(value || '0');
-      const { percent, amount } = calculateMetrics(updatedRecord);
-      updatedRecord.profitPercent = percent;
-      updatedRecord.realizedPnl = amount;
-    }
-
-    setCurrentRecord(updatedRecord);
-  };
-
-  const handleStrategyChange = (e: any) => {
-    const { name, value } = e.target;
-    setCurrentStrategy({ ...currentStrategy, [name]: value });
-  };
-
-  const saveRecord = async () => {
+  const saveSettings = async (newExchanges) => {
     if (!user) return;
     try {
-      const recordData = {
-        ...currentRecord,
-        margin: parseFloat(currentRecord.margin || '0'),
-        leverage: parseFloat(currentRecord.leverage || '1'),
-        entryPrice: parseFloat(currentRecord.entryPrice || '0'),
-        exitPrice: currentRecord.exitPrice ? parseFloat(currentRecord.exitPrice) : null,
-        profitPercent: currentRecord.profitPercent ? parseFloat(currentRecord.profitPercent) : null,
-        realizedPnl: currentRecord.realizedPnl ? parseFloat(currentRecord.realizedPnl) : null,
-        updated_at: serverTimestamp(),
-      };
-
-      if (editingId) {
-        await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'stock_records', editingId), recordData);
-      } else {
-        await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'stock_records'), {
-          ...recordData,
-          created_at: serverTimestamp(),
-        });
-      }
-
-      resetRecordForm();
-      setIsRecordModalOpen(false);
+      await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'config'), {
+        exchanges: newExchanges
+      }, { merge: true });
+      setExchanges(newExchanges);
     } catch (e) {
-      console.error(e);
+      console.error("Save settings error", e);
     }
   };
 
-  const saveStrategy = async () => {
-    if (!user || !currentStrategy.title) return;
+  // --- Derived State ---
+  const uniqueSymbols = useMemo(() => {
+    const symbols = new Set(records.map(r => r.symbol?.toUpperCase()).filter(Boolean));
+    return Array.from(symbols).sort();
+  }, [records]);
+
+  // --- CRUD Functions ---
+  const handleSave = async (formData) => {
+    if (!user) return;
+    let finalData = { ...formData };
+    
+    // PNL 및 수수료 자동 계산
+    if (finalData.closePrice && finalData.entryPrice && finalData.leverage) {
+      const entry = parseFloat(finalData.entryPrice);
+      const close = parseFloat(finalData.closePrice);
+      const lev = parseFloat(finalData.leverage);
+      const margin = parseFloat(finalData.margin) || 0;
+      
+      let pnlPercent = 0;
+      if (finalData.position === 'Long') {
+        pnlPercent = ((close - entry) / entry) * 100 * lev;
+      } else {
+        pnlPercent = ((entry - close) / entry) * 100 * lev;
+      }
+      finalData.pnl = parseFloat(pnlPercent.toFixed(2));
+      
+      const positionSize = margin * lev;
+      const exchangeInfo = exchanges.find(ex => ex.name === finalData.exchange);
+      const entryFeeRate = (exchangeInfo ? (finalData.entryType === 'Maker' ? exchangeInfo.makerFee : exchangeInfo.takerFee) : 0.04) / 100;
+      const exitFeeRate = (exchangeInfo ? (finalData.exitType === 'Maker' ? exchangeInfo.makerFee : exchangeInfo.takerFee) : 0.04) / 100;
+
+      const entryFee = positionSize * entryFeeRate;
+      const exitValue = positionSize * (1 + (pnlPercent / 100 / lev));
+      const exitFee = exitValue * exitFeeRate;
+      
+      const totalFee = entryFee + exitFee;
+      finalData.fees = parseFloat(totalFee.toFixed(2));
+
+      const grossPnl = margin * (pnlPercent / 100);
+      finalData.grossPnl = parseFloat(grossPnl.toFixed(2));
+      finalData.realizedPnlValue = parseFloat((grossPnl - totalFee).toFixed(2));
+    }
 
     try {
-      const payload = {
-        ...currentStrategy,
-        updated_at: serverTimestamp(),
-      };
-
-      if (editingStrategyId) {
-        await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'stock_strategies', editingStrategyId), payload);
+      const colRef = collection(db, 'artifacts', appId, 'users', user.uid, 'stock_records');
+      if (editingRecord) {
+        await updateDoc(doc(colRef, editingRecord.id), finalData);
       } else {
-        await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'stock_strategies'), {
-          ...payload,
-          created_at: serverTimestamp(),
+        await addDoc(colRef, {
+          ...finalData,
+          createdAt: serverTimestamp()
         });
       }
-
-      setIsStrategyModalOpen(false);
-      setCurrentStrategy({ title: '', description: '' });
-      setEditingStrategyId(null);
+      setIsFormOpen(false);
+      setEditingRecord(null);
     } catch (e) {
-      console.error(e);
+      console.error("Save error:", e);
     }
   };
 
   const handleDelete = async () => {
-    if (!deleteTarget || !user) return;
-    const { type, id } = deleteTarget;
+    if (!user || !deleteTarget) return;
     try {
-      const collectionName = type === 'record' ? 'stock_records' : 'stock_strategies';
-      await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, collectionName, id));
+      await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'stock_records', deleteTarget.id));
       setDeleteTarget(null);
     } catch (e) {
-      console.error(e);
+      console.error("Delete error:", e);
     }
   };
 
-  const resetRecordForm = () => {
-    setCurrentRecord(initialRecordState);
-    setEditingId(null);
-  };
-
-  const openEditRecord = (rec: any) => {
-    setCurrentRecord(rec);
-    setEditingId(rec.id);
-    setIsRecordModalOpen(true);
-  };
-
-  const exportCSV = () => {
-    const header = ['날짜', '종목', '포지션', '진입가', '청산가', '레버리지', '마진($)', '수익률(%)', '실현손익($)', '결과', '전략', '메모'];
-    const rows = records.map((r) => [
+  const handleExportCSV = () => {
+    const BOM = '\uFEFF';
+    const header = ['날짜', '거래소', '종목', '포지션', '진입가', '청산가', '레버리지', '수익률(%)', '순수익($)', '수수료($)', '전략', '메모'];
+    const rows = records.map(r => [
       r.openDate,
-      r.ticker,
+      r.exchange || '-',
+      r.symbol,
       r.position,
       r.entryPrice,
-      r.exitPrice || '',
+      r.closePrice || '-',
       r.leverage,
-      r.margin,
-      r.profitPercent || '',
-      r.realizedPnl || '',
-      r.profitPercent > 0 ? 'Win' : r.profitPercent < 0 ? 'Loss' : 'BE',
-      strategies.find((s) => s.id === r.strategyId)?.title || '',
-      (r.memo || '').replace(/\n/g, ' '),
+      r.pnl || '-',
+      r.realizedPnlValue || '-',
+      r.fees || '-',
+      r.strategy || '-',
+      `"${(r.entryMemo || '')} ${(r.exitMemo || '')}"`
     ]);
 
-    const csvContent = [header, ...rows].map((row) => row.join(',')).join('\n');
-    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-
+    const csvContent = BOM + [header, ...rows].map(e => e.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'trade_records.csv');
+    link.setAttribute("href", url);
+    link.setAttribute("download", `trading_log_${new Date().toISOString().slice(0,10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
+  // --- Filtering ---
   const filteredRecords = useMemo(() => {
-    let data = [...records];
-
-    if (selectedStrategyForFilter) {
-      data = data.filter((record) => record.strategyId === selectedStrategyForFilter);
+    let result = records;
+    if (selectedSymbol !== 'ALL') {
+      result = result.filter(r => r.symbol?.toUpperCase() === selectedSymbol);
     }
-
     if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      data = data.filter(
-        (record) =>
-          (record.ticker && record.ticker.toLowerCase().includes(term)) ||
-          (record.memo && record.memo.toLowerCase().includes(term)),
+      const lower = searchTerm.toLowerCase();
+      result = result.filter(r => 
+        r.symbol?.toLowerCase().includes(lower) || 
+        r.strategy?.toLowerCase().includes(lower) ||
+        r.exchange?.toLowerCase().includes(lower) ||
+        r.entryMemo?.toLowerCase().includes(lower)
       );
     }
-    return data;
-  }, [records, searchTerm, selectedStrategyForFilter]);
+    return result;
+  }, [records, searchTerm, selectedSymbol]);
 
-  useEffect(() => {
-    if (!records.length) return;
+  const openPositions = filteredRecords.filter(r => r.status === 'Open');
+  const closedRecords = filteredRecords.filter(r => r.status === 'Closed');
 
-    const totalTrades = records.length;
-    const completedTrades = records.filter((r) => r.profitPercent !== null && r.profitPercent !== '').length;
-    const wins = records.filter((r) => r.profitPercent && r.profitPercent > 0).length;
-    const losses = records.filter((r) => r.profitPercent && r.profitPercent < 0).length;
-
-    const longTrades = records.filter((r) => r.position === 'Long');
-    const shortTrades = records.filter((r) => r.position === 'Short');
-    const longWins = longTrades.filter((r) => r.profitPercent && r.profitPercent > 0).length;
-    const shortWins = shortTrades.filter((r) => r.profitPercent && r.profitPercent > 0).length;
-
-    const avgProfit =
-      completedTrades > 0
-        ? records
-            .filter((r) => r.profitPercent)
-            .reduce((sum, r) => sum + (Number(r.profitPercent) || 0), 0) / completedTrades
-        : 0;
-
-    const totalPnl = records.reduce((sum, r) => sum + (Number(r.realizedPnl) || 0), 0);
-
-    const strategyStats: any = {};
-    records.forEach((r) => {
-      const strategyId = r.strategyId || 'none';
-      if (!strategyStats[strategyId]) {
-        strategyStats[strategyId] = { pnl: 0, count: 0 };
-      }
-      strategyStats[strategyId].pnl += Number(r.realizedPnl) || 0;
-      strategyStats[strategyId].count += 1;
-    });
-
-    let bestStrategyId: string | null = null;
-    let worstStrategyId: string | null = null;
-    let maxPnl = -Infinity;
-    let minPnl = Infinity;
-
-    Object.entries(strategyStats).forEach(([id, s]: any) => {
-      if (s.pnl > maxPnl) {
-        maxPnl = s.pnl;
-        bestStrategyId = id;
-      }
-      if (s.pnl < minPnl) {
-        minPnl = s.pnl;
-        worstStrategyId = id;
-      }
-    });
-
-    setStats({
-      winRate: completedTrades > 0 ? Math.round((wins / completedTrades) * 100) : 0,
-      avgProfit: Number(avgProfit.toFixed(2)),
-      totalTrades,
-      totalPnl: Number(totalPnl.toFixed(2)),
-      longWinRate: longTrades.length > 0 ? Math.round((longWins / longTrades.length) * 100) : 0,
-      shortWinRate: shortTrades.length > 0 ? Math.round((shortWins / shortTrades.length) * 100) : 0,
-      bestStrategy:
-        bestStrategyId && bestStrategyId !== 'none'
-          ? strategies.find((s) => s.id === bestStrategyId)?.title || '전략명 없음'
-          : '-',
-      worstStrategy:
-        worstStrategyId && worstStrategyId !== 'none'
-          ? strategies.find((s) => s.id === worstStrategyId)?.title || '전략명 없음'
-          : '-',
-    });
-  }, [records, strategies]);
-
-  const selectedStrategy = useMemo(
-    () => strategies.find((s) => s.id === currentRecord.strategyId),
-    [currentRecord.strategyId, strategies],
-  );
-
-  // Loading View (Light Theme)
-  if (!user) {
+  const HighlightText = ({ text, highlight }) => {
+    if (!highlight || !text) return <span>{text}</span>;
+    const parts = text.toString().split(new RegExp(`(${highlight})`, 'gi'));
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="flex flex-col items-center gap-4 rounded-2xl bg-white p-8 text-center shadow-2xl border border-gray-100">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full" style={{ backgroundColor: '#FFF0F3' }}>
-            <TrendingUp style={{ color: '#FF9EAA' }} size={28} />
+      <span>
+        {parts.map((part, i) => 
+          part.toLowerCase() === highlight.toLowerCase() ? 
+            <span key={i} className={`${APP_CONFIG.theme.highlight} rounded px-0.5`}>{part}</span> : part
+        )}
+      </span>
+    );
+  };
+
+  if (loading && !user) return <div className={`min-h-screen flex items-center justify-center ${APP_CONFIG.theme.secondaryBg} ${APP_CONFIG.theme.accent} animate-pulse font-sans`}>로딩중...</div>;
+
+  return (
+    <div className={`min-h-screen ${APP_CONFIG.theme.secondaryBg} pb-20 md:pb-0 md:pl-64 transition-all duration-300`}>
+      {/* 폰트 적용: Red Hat Display + Pretendard */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@300;400;500;600;700&display=swap');
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        
+        body { 
+          font-family: 'Red Hat Display', 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif; 
+        }
+      `}</style>
+
+      {/* Mobile Nav */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-rose-200 z-50 flex justify-around p-3 pb-safe">
+        <NavButton icon={<Icons.Dashboard size={20}/>} label="일지" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
+        <NavButton icon={<Icons.Stats size={20}/>} label="통계" active={activeTab === 'stats'} onClick={() => setActiveTab('stats')} />
+        <NavButton icon={<Icons.Settings size={20}/>} label="설정" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
+      </div>
+
+      {/* Desktop Sidebar */}
+      <div className="hidden md:flex fixed left-0 top-0 bottom-0 w-64 bg-white border-r border-rose-100 flex-col p-6 shadow-sm z-40">
+        <div className="flex items-center gap-2 mb-10">
+          <div className={`w-8 h-8 ${APP_CONFIG.theme.primary} rounded-lg flex items-center justify-center text-white font-bold shadow-md shadow-rose-200`}>V</div>
+          <h1 className="text-xl font-bold text-gray-800 tracking-tight">Very Daily Log</h1>
+        </div>
+        
+        <nav className="flex-1 space-y-2">
+          <SidebarItem icon={<Icons.Dashboard size={18}/>} label="대시보드" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
+          <SidebarItem icon={<Icons.Stats size={18}/>} label="통계 분석" active={activeTab === 'stats'} onClick={() => setActiveTab('stats')} />
+          <SidebarItem icon={<Icons.Strategies size={18}/>} label="매매 전략" active={activeTab === 'strategies'} onClick={() => setActiveTab('strategies')} />
+          <SidebarItem icon={<Icons.Settings size={18}/>} label="환경 설정" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
+        </nav>
+        
+        <div className="pt-6 border-t border-rose-100">
+           <button onClick={handleExportCSV} className="flex items-center gap-2 text-sm text-gray-500 hover:text-rose-500 transition-colors w-full p-2 rounded-lg hover:bg-rose-50">
+             <Icons.Export size={16} /> 엑셀 다운로드
+           </button>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <main className="p-4 md:p-8 max-w-6xl mx-auto min-h-screen">
+        {activeTab === 'dashboard' && (
+          <DashboardView 
+            openPositions={openPositions} 
+            closedRecords={closedRecords} 
+            onAdd={() => { setEditingRecord(null); setIsFormOpen(true); }}
+            onEdit={(r) => { setEditingRecord(r); setIsFormOpen(true); }}
+            onDelete={(r) => setDeleteTarget(r)}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            selectedSymbol={selectedSymbol}
+            setSelectedSymbol={setSelectedSymbol}
+            uniqueSymbols={uniqueSymbols}
+            HighlightText={HighlightText}
+            Icons={Icons}
+          />
+        )}
+        {activeTab === 'stats' && <StatsView records={records} Icons={Icons} />}
+        {activeTab === 'strategies' && <StrategiesView strategies={strategies} />}
+        {activeTab === 'settings' && <SettingsView exchanges={exchanges} onSave={saveSettings} Icons={Icons} />}
+      </main>
+
+      {/* Modals */}
+      {isFormOpen && (
+        <TradeFormModal 
+          isOpen={isFormOpen} 
+          onClose={() => setIsFormOpen(false)} 
+          initialData={editingRecord}
+          onSave={handleSave}
+          strategies={strategies}
+          exchanges={exchanges}
+          existingSymbols={uniqueSymbols}
+          Icons={Icons}
+        />
+      )}
+
+      {deleteTarget && (
+        <DeleteConfirmModal 
+          target={deleteTarget} 
+          onClose={() => setDeleteTarget(null)} 
+          onConfirm={handleDelete} 
+          Icons={Icons}
+        />
+      )}
+    </div>
+  );
+}
+
+/**
+ * ------------------------------------------------------------------
+ * [View Components]
+ * ------------------------------------------------------------------
+ */
+function DashboardView({ 
+  openPositions, closedRecords, onAdd, onEdit, onDelete, 
+  searchTerm, setSearchTerm, selectedSymbol, setSelectedSymbol, uniqueSymbols, HighlightText, Icons
+}) {
+  return (
+    <div className="space-y-6 animate-fade-in-up">
+      {/* Top Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800">오늘의 매매 💖</h2>
+          <p className={`${APP_CONFIG.theme.accent} text-sm`}>기록이 쌓여 실력이 됩니다.</p>
+        </div>
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="relative flex-1 md:w-64">
+            <Icons.Search className="absolute left-3 top-1/2 -translate-y-1/2 text-rose-300" size={16} />
+            <input 
+              type="text" 
+              placeholder="종목, 메모, 거래소 검색..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 bg-white border border-rose-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 transition-shadow placeholder-rose-200"
+            />
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-800">Berry Log</h1>
-            <p className="mt-2 text-sm text-gray-400">나만 보는 트레이딩 일지를 불러오는 중...</p>
+          <button 
+            onClick={onAdd}
+            className={`${APP_CONFIG.theme.primary} ${APP_CONFIG.theme.primaryHover} text-white px-4 py-2 rounded-xl shadow-md flex items-center gap-2 text-sm font-semibold transition-transform active:scale-95 whitespace-nowrap`}
+          >
+            <Icons.Add size={16} /> 기록하기
+          </button>
+        </div>
+      </div>
+
+      {/* Symbol Filters */}
+      <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
+        <button 
+          onClick={() => setSelectedSymbol('ALL')}
+          className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${selectedSymbol === 'ALL' ? 'bg-rose-500 text-white shadow-md shadow-rose-200' : 'bg-white text-gray-500 hover:bg-rose-50'}`}
+        >
+          ALL
+        </button>
+        {uniqueSymbols.map(sym => (
+          <button 
+            key={sym}
+            onClick={() => setSelectedSymbol(sym)}
+            className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${selectedSymbol === sym ? 'bg-rose-500 text-white shadow-md shadow-rose-200' : 'bg-white text-gray-500 hover:bg-rose-50'}`}
+          >
+            {sym}
+          </button>
+        ))}
+      </div>
+
+      {/* Open Positions */}
+      <section>
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-2 h-6 bg-rose-400 rounded-full"></div>
+          <h3 className="font-bold text-lg text-gray-700">진행 중인 포지션 ({openPositions.length})</h3>
+        </div>
+        
+        {openPositions.length === 0 ? (
+          <div className="bg-white/60 border border-dashed border-rose-200 rounded-2xl p-8 text-center text-gray-400 text-sm">
+            현재 보유 중인 포지션이 없어요 🕊️
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {openPositions.map(record => (
+              <TradeCard 
+                key={record.id} 
+                record={record} 
+                onEdit={onEdit} 
+                onDelete={onDelete} 
+                HighlightText={HighlightText}
+                searchTerm={searchTerm}
+                Icons={Icons}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Closed Records */}
+      <section>
+        <details className="group" open={true}>
+          <summary className="list-none cursor-pointer mb-3">
+            <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-rose-100 hover:border-rose-300 transition-colors">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-6 bg-gray-300 group-open:bg-rose-400 transition-colors rounded-full"></div>
+                <h3 className="font-bold text-lg text-gray-700">매매 기록 보관함 ({closedRecords.length})</h3>
+              </div>
+              <Icons.Down className="text-gray-400 group-open:rotate-180 transition-transform" />
+            </div>
+          </summary>
+          
+          <div className="mt-4 space-y-3">
+            {closedRecords.length === 0 ? (
+              <div className="text-center p-8 text-gray-400 text-sm">아직 완료된 매매 기록이 없어요.</div>
+            ) : (
+              closedRecords.map(record => (
+                <HistoryRow 
+                  key={record.id} 
+                  record={record} 
+                  onEdit={onEdit} 
+                  onDelete={onDelete} 
+                  HighlightText={HighlightText}
+                  searchTerm={searchTerm}
+                  Icons={Icons}
+                />
+              ))
+            )}
+          </div>
+        </details>
+      </section>
+    </div>
+  );
+}
+
+function SettingsView({ exchanges, onSave, Icons }) {
+  const [localExchanges, setLocalExchanges] = useState(exchanges);
+  const [newEx, setNewEx] = useState({ name: '', makerFee: '0.02', takerFee: '0.05' });
+
+  const handleAdd = () => {
+    if (!newEx.name) return;
+    const next = [...localExchanges, { ...newEx, id: Date.now().toString() }];
+    setLocalExchanges(next);
+    onSave(next);
+    setNewEx({ name: '', makerFee: '0.02', takerFee: '0.05' });
+  };
+
+  const handleDelete = (id) => {
+    if (confirm('이 거래소를 목록에서 삭제할까요?')) {
+      const next = localExchanges.filter(e => e.id !== id);
+      setLocalExchanges(next);
+      onSave(next);
+    }
+  };
+
+  const handleUpdate = (id, field, value) => {
+    const next = localExchanges.map(e => e.id === id ? { ...e, [field]: value } : e);
+    setLocalExchanges(next);
+  };
+
+  const handleBlur = () => {
+    onSave(localExchanges);
+  };
+
+  return (
+    <div className="space-y-6 animate-fade-in-up max-w-2xl mx-auto">
+      <h2 className="text-2xl font-bold text-gray-800 mb-6">환경 설정 ⚙️</h2>
+      
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-rose-100">
+        <h3 className="font-bold text-lg text-gray-700 mb-4 flex items-center gap-2">
+          <Icons.Fee size={20} className="text-rose-400"/> 거래소 및 수수료 관리
+        </h3>
+        <p className="text-xs text-gray-500 mb-4">자주 사용하는 거래소와 수수료율(%)을 등록해두세요. 매매 기록 시 자동 적용됩니다.</p>
+        
+        <div className="space-y-3">
+          {localExchanges.map(ex => (
+            <div key={ex.id} className="flex gap-2 items-center bg-rose-50/50 p-2 rounded-xl">
+              <input 
+                type="text" 
+                value={ex.name} 
+                onChange={(e) => handleUpdate(ex.id, 'name', e.target.value)}
+                onBlur={handleBlur}
+                className="flex-1 bg-transparent border-b border-rose-200 focus:border-rose-400 px-2 py-1 outline-none text-sm font-medium"
+              />
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-gray-400">Maker(%)</span>
+                <input 
+                  type="number" 
+                  step="0.01"
+                  value={ex.makerFee} 
+                  onChange={(e) => handleUpdate(ex.id, 'makerFee', e.target.value)}
+                  onBlur={handleBlur}
+                  className="w-16 bg-white rounded border border-rose-100 px-2 py-1 text-sm text-center outline-none focus:border-rose-300"
+                />
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-gray-400">Taker(%)</span>
+                <input 
+                  type="number" 
+                  step="0.01"
+                  value={ex.takerFee} 
+                  onChange={(e) => handleUpdate(ex.id, 'takerFee', e.target.value)}
+                  onBlur={handleBlur}
+                  className="w-16 bg-white rounded border border-rose-100 px-2 py-1 text-sm text-center outline-none focus:border-rose-300"
+                />
+              </div>
+              <button onClick={() => handleDelete(ex.id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors">
+                <Icons.Delete size={16} />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Add New */}
+        <div className="mt-4 pt-4 border-t border-dashed border-rose-200">
+          <div className="flex gap-2 items-end">
+             <div className="flex-1">
+               <label className="text-[10px] text-gray-400 font-bold ml-1">거래소명</label>
+               <input 
+                 placeholder="예: Bitget"
+                 value={newEx.name}
+                 onChange={(e) => setNewEx({...newEx, name: e.target.value})}
+                 className="w-full bg-gray-50 rounded-lg px-3 py-2 text-sm outline-none border border-transparent focus:bg-white focus:border-rose-300 transition-colors"
+               />
+             </div>
+             <div className="w-20">
+               <label className="text-[10px] text-gray-400 font-bold ml-1">Maker(%)</label>
+               <input 
+                 type="number" step="0.01"
+                 value={newEx.makerFee}
+                 onChange={(e) => setNewEx({...newEx, makerFee: e.target.value})}
+                 className="w-full bg-gray-50 rounded-lg px-3 py-2 text-sm outline-none border border-transparent focus:bg-white focus:border-rose-300 transition-colors text-center"
+               />
+             </div>
+             <div className="w-20">
+               <label className="text-[10px] text-gray-400 font-bold ml-1">Taker(%)</label>
+               <input 
+                 type="number" step="0.01"
+                 value={newEx.takerFee}
+                 onChange={(e) => setNewEx({...newEx, takerFee: e.target.value})}
+                 className="w-full bg-gray-50 rounded-lg px-3 py-2 text-sm outline-none border border-transparent focus:bg-white focus:border-rose-300 transition-colors text-center"
+               />
+             </div>
+             <button onClick={handleAdd} className={`${APP_CONFIG.theme.primary} ${APP_CONFIG.theme.primaryHover} text-white p-2.5 rounded-lg transition-colors shadow-md shadow-rose-200`}>
+               <Icons.Add size={18} />
+             </button>
           </div>
         </div>
       </div>
-    );
-  }
-
-  // Main View (Light Gray & Baby Pink & White Theme)
-  return (
-    <div className="flex min-h-screen justify-center bg-gray-50 px-3 py-6 text-gray-800 font-sans">
-      <div className="flex w-full max-w-5xl flex-col gap-4">
-        {/* 헤더 */}
-        <header className="flex items-center justify-between rounded-2xl bg-white px-5 py-4 shadow-sm border border-gray-100">
-          <div className="flex items-center gap-1">
-            <div>
-              <h1 className="text-base font-bold tracking-tight text-gray-900">급등주 노트</h1>
-              <p className="text-[11px] text-gray-500">내 기준으로만 정리하는 매매 일지 & 전략 노트</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 text-[11px] text-gray-400">
-            <span className="hidden sm:inline">모드</span>
-            <button
-              onClick={() => setViewMode('records')}
-              style={viewMode === 'records' ? { backgroundColor: '#FFF0F3', color: '#FF758F', fontWeight: 'bold' } : {}}
-              className={`flex items-center gap-1 rounded-full px-3 py-1 transition-all ${
-                viewMode === 'records'
-                  ? '' // Style prop handles color
-                  : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
-              } text-[11px]`}
-            >
-              <List size={14} />
-              매매 기록
-            </button>
-            <button
-              onClick={() => setViewMode('strategies')}
-              style={viewMode === 'strategies' ? { backgroundColor: '#FFF0F3', color: '#FF758F', fontWeight: 'bold' } : {}}
-              className={`flex items-center gap-1 rounded-full px-3 py-1 transition-all ${
-                viewMode === 'strategies'
-                  ? '' // Style prop handles color
-                  : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
-              } text-[11px]`}
-            >
-              <BookOpen size={14} />
-              전략 노트
-            </button>
-          </div>
-        </header>
-
-        {/* 상단 섹션 (검색 + 요약 통계) */}
-        <section className="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-          {/* 검색 & 필터 */}
-          <div className="flex flex-col gap-3 rounded-2xl bg-white p-4 shadow-sm border border-gray-100">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-2.5 text-gray-400" size={16} />
-              <input
-                type="text"
-                placeholder="종목 / 메모 키워드로 검색"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-xl bg-gray-50 py-2.5 pl-9 pr-3 text-xs text-gray-900 outline-none border border-gray-200 placeholder:text-gray-400 transition-all"
-                // Focus styles difficult to force inline without state, relying on border
-                style={{ borderColor: '#e5e7eb' }}
-              />
-            </div>
-
-            <div className="mt-1 flex flex-wrap gap-1">
-              <button
-                onClick={() => setSelectedStrategyForFilter(null)}
-                style={!selectedStrategyForFilter ? { backgroundColor: '#FFF0F3', color: '#FF758F', borderColor: '#FFB7C5', fontWeight: 'bold' } : {}}
-                className={`rounded-full border px-3 py-1 text-[11px] transition-colors ${
-                  !selectedStrategyForFilter
-                    ? ''
-                    : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50'
-                }`}
-              >
-                전체
-              </button>
-              {strategies.map((s) => (
-                <button
-                  key={s.id}
-                  onClick={() =>
-                    setSelectedStrategyForFilter((prev) => (prev === s.id ? null : (s.id as string)))
-                  }
-                  style={selectedStrategyForFilter === s.id ? { backgroundColor: '#FFF0F3', color: '#FF758F', borderColor: '#FFB7C5', fontWeight: 'bold' } : {}}
-                  className={`rounded-full border px-3 py-1 text-[11px] transition-colors ${
-                    selectedStrategyForFilter === s.id
-                      ? ''
-                      : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50'
-                  }`}
-                >
-                  {s.title}
-                </button>
-              ))}
-            </div>
-
-            <div className="mt-1 flex gap-2">
-              <button
-                onClick={() => {
-                  resetRecordForm();
-                  setIsRecordModalOpen(true);
-                }}
-                style={{ backgroundColor: '#FF9EAA', color: '#ffffff' }}
-                className="flex flex-1 items-center justify-center gap-1 rounded-xl py-2 text-xs font-bold shadow-md shadow-pink-100 transition hover:opacity-90"
-              >
-                <Plus size={14} />
-                새 매매 기록
-              </button>
-              <button
-                onClick={() => {
-                  setCurrentStrategy({ title: '', description: '' });
-                  setEditingStrategyId(null);
-                  setIsStrategyModalOpen(true);
-                }}
-                className="flex items-center justify-center gap-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-[11px] text-gray-600 transition hover:bg-gray-50 hover:border-gray-300"
-              >
-                <BookOpen size={14} />
-                전략 추가
-              </button>
-              <button
-                onClick={exportCSV}
-                className="flex items-center justify-center gap-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-[11px] text-gray-600 transition hover:bg-gray-50 hover:border-gray-300"
-              >
-                <Download size={14} />
-                내보내기
-              </button>
-            </div>
-          </div>
-
-          {/* 통계 카드 */}
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-            <div className="flex flex-col justify-between rounded-2xl bg-white p-4 shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between text-[11px] text-gray-400">
-                <span>승률</span>
-                <TrendingUp style={{ color: '#FF9EAA' }} size={16} />
-              </div>
-              <div className="mt-2 text-2xl font-bold text-gray-800">
-                {stats.winRate}
-                <span className="text-sm font-normal text-gray-400"> %</span>
-              </div>
-              <div className="mt-1 text-[11px] text-gray-500">
-                총 {stats.totalTrades} 트레이드 / Long {stats.longWinRate}%, Short {stats.shortWinRate}%
-              </div>
-            </div>
-
-            <div className="flex flex-col justify-between rounded-2xl bg-white p-4 shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between text-[11px] text-gray-400">
-                <span>평균 수익률</span>
-                <PieChart className="text-sky-400" size={16} />
-              </div>
-              <div className="mt-2 text-2xl font-bold text-gray-800">
-                {stats.avgProfit}
-                <span className="text-sm font-normal text-gray-400"> %</span>
-              </div>
-              <div className="mt-1 text-[11px] text-gray-500">
-                실현손익 합계{' '}
-                <span className={`font-semibold ${stats.totalPnl >= 0 ? 'text-red-400' : 'text-sky-400'}`}>
-                  ${formatCurrency(stats.totalPnl)}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex flex-col justify-between rounded-2xl bg-white p-4 shadow-sm border border-gray-100 md:col-span-1 col-span-2">
-              <div className="flex items-center justify-between text-[11px] text-gray-400">
-                <span>전략 성과</span>
-                <Target className="text-amber-400" size={16} />
-              </div>
-              <div className="mt-2 space-y-1 text-[11px]">
-                <div>
-                  <span className="text-gray-400">Best</span>
-                  <div className="truncate text-xs font-bold text-emerald-500">{stats.bestStrategy || '-'}</div>
-                </div>
-                <div>
-                  <span className="text-gray-400">Worst</span>
-                  <div className="truncate text-xs font-bold text-rose-400">{stats.worstStrategy || '-'}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 본문: 좌측 리스트 / 우측 요약 or 전략 리스트 */}
-        <section className="grid gap-4 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-          {/* 좌측: 매매 기록 리스트 or 전략 리스트 */}
-          <div className="flex flex-col gap-2 rounded-2xl bg-white p-3 shadow-sm border border-gray-100 min-h-[400px]">
-            {viewMode === 'records' ? (
-              <>
-                <div className="mb-1 flex items-center justify-between px-1 text-[11px] text-gray-400 font-medium">
-                  <span>매매 기록 {filteredRecords.length}개</span>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  {filteredRecords.map((record) => (
-                    <button
-                      key={record.id}
-                      onClick={() => setSelectedRecordForDetail(record)}
-                      className="group flex w-full items-stretch gap-3 rounded-xl bg-white p-3 text-left text-xs border border-gray-100 transition hover:bg-gray-50"
-                    >
-                      <div className="flex w-16 flex-col items-start justify-between">
-                        <span className="rounded-md bg-gray-100 px-2 py-1 text-[10px] text-gray-500 font-medium">
-                          {formatDateShort(record.openDate || record.date)}
-                        </span>
-                        <span
-                          className={`mt-1 rounded-md px-2 py-0.5 text-[10px] font-medium ${
-                            record.position === 'Long'
-                              ? 'bg-emerald-50 text-emerald-600'
-                              : 'bg-sky-50 text-sky-600'
-                          }`}
-                        >
-                          {record.position}
-                        </span>
-                      </div>
-
-                      <div className="flex min-w-0 flex-1 flex-col gap-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-1.5">
-                            <span className="truncate text-sm font-bold text-gray-800">
-                              <HighlightText text={record.ticker || '-'} highlight={searchTerm} />
-                            </span>
-                            {record.margin && (
-                              <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-500">
-                                ${formatCurrency(record.margin)} / {record.leverage}x
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-1 text-[11px]">
-                            {record.profitPercent ? (
-                              <span
-                                className={
-                                  record.profitPercent > 0
-                                    ? 'font-bold text-red-400'
-                                    : record.profitPercent < 0
-                                    ? 'font-bold text-sky-400'
-                                    : 'text-gray-400'
-                                }
-                              >
-                                {record.profitPercent}%
-                              </span>
-                            ) : (
-                              <span className="text-gray-400">진행중</span>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 text-[11px] text-gray-400">
-                          <span>
-                            진입 {record.entryPrice ? `$${formatCurrency(record.entryPrice)}` : '-'} → 청산{' '}
-                            {record.exitPrice ? `$${formatCurrency(record.exitPrice)}` : '미청산'}
-                          </span>
-                          <span className="text-gray-300">·</span>
-                          <span className="flex items-center gap-1">
-                            <Clock size={11} />
-                            {record.closeDate ? formatTimeDiff(record.openDate, record.closeDate) : '진행중'}
-                          </span>
-                        </div>
-
-                        <div className="mt-1 flex items-center justify-between">
-                          <div className="flex flex-1 items-center gap-1 text-[11px] text-gray-500">
-                            {record.strategyId && (
-                              <span className="truncate rounded-md bg-amber-50 px-2 py-0.5 text-[10px] text-amber-600 border border-amber-100">
-                                {strategies.find((s) => s.id === record.strategyId)?.title || ''}
-                              </span>
-                            )}
-                            {record.memo && (
-                              <span className="truncate text-[11px] text-gray-400 ml-1">
-                                <HighlightText text={record.memo} highlight={searchTerm} />
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="ml-2 flex items-center gap-1 text-[11px]">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openEditRecord(record);
-                              }}
-                              className="rounded-full p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
-                            >
-                              <Edit2 size={13} />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setDeleteTarget({
-                                  type: 'record',
-                                  id: record.id,
-                                  title: record.ticker || '기록',
-                                });
-                              }}
-                              className="rounded-full p-1.5 text-gray-400 transition hover:bg-red-50 hover:text-red-400"
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-
-                  {!filteredRecords.length && (
-                    <div className="flex flex-col items-center justify-center gap-2 rounded-2xl bg-gray-50 py-10 text-center text-xs text-gray-400 border border-dashed border-gray-200">
-                      <List size={18} className="text-gray-300" />
-                      <div className="space-y-1">
-                        <p>아직 기록된 매매가 없거나, 검색 조건에 맞는 결과가 없어.</p>
-                        <button
-                          onClick={() => {
-                            setSearchTerm('');
-                            resetRecordForm();
-                            setIsRecordModalOpen(true);
-                          }}
-                          style={{ backgroundColor: '#FFF0F3', color: '#FF758F' }}
-                          className="mt-1 inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-bold transition hover:opacity-80"
-                        >
-                          <Plus size={12} />
-                          첫 매매 기록 추가하기
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="mb-1 flex items-center justify-between px-1 text-[11px] text-gray-400 font-medium">
-                  <span>전략 노트 {strategies.length}개</span>
-                </div>
-                <div className="flex flex-col gap-2">
-                  {strategies.map((strategy) => (
-                    <div
-                      key={strategy.id}
-                      className="group rounded-xl bg-white p-3 text-xs border border-gray-100 transition hover:shadow-sm hover:border-amber-200"
-                    >
-                      <div className="mb-1 flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-50">
-                            <Target className="text-amber-400" size={15} />
-                          </div>
-                          <span className="text-sm font-bold text-gray-800">{strategy.title}</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-[11px] text-gray-400">
-                          <button
-                            onClick={() => {
-                              setCurrentStrategy(strategy);
-                              setEditingStrategyId(strategy.id);
-                              setIsStrategyModalOpen(true);
-                            }}
-                            className="rounded-full p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
-                          >
-                            <Edit2 size={13} />
-                          </button>
-                          <button
-                            onClick={() =>
-                              setDeleteTarget({
-                                type: 'strategy',
-                                id: strategy.id,
-                                title: strategy.title,
-                              })
-                            }
-                            className="rounded-full p-1.5 text-gray-400 transition hover:bg-red-50 hover:text-red-400"
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
-                      </div>
-                      <div className="whitespace-pre-line text-[11px] text-gray-500 pl-8">{strategy.description}</div>
-                    </div>
-                  ))}
-
-                  {!strategies.length && (
-                    <div className="flex flex-col items-center justify-center gap-2 rounded-2xl bg-gray-50 py-10 text-center text-xs text-gray-400 border border-dashed border-gray-200">
-                      <BookOpen size={18} className="text-gray-300" />
-                      <div className="space-y-1">
-                        <p>아직 정리된 전략 노트가 없어.</p>
-                        <button
-                          onClick={() => {
-                            setCurrentStrategy({ title: '', description: '' });
-                            setEditingStrategyId(null);
-                            setIsStrategyModalOpen(true);
-                          }}
-                          className="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1.5 text-[11px] font-medium text-amber-600 hover:bg-amber-200 transition"
-                        >
-                          <Plus size={12} />
-                          첫 전략 노트 추가하기
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* 우측: 상세 or 요약 */}
-          <div className="flex flex-col gap-2 rounded-2xl bg-white p-4 shadow-sm border border-gray-100 min-h-[400px]">
-            {viewMode === 'records' ? (
-              selectedRecordForDetail ? (
-                <div className="flex h-full flex-col">
-                  <div className="mb-3 flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="rounded-md bg-gray-100 px-2 py-0.5 text-[10px] text-gray-500">
-                          {formatDate(selectedRecordForDetail.openDate || selectedRecordForDetail.date)}
-                        </span>
-                        <span
-                          className={`rounded-md px-2 py-0.5 text-[10px] font-medium ${
-                            selectedRecordForDetail.position === 'Long'
-                              ? 'bg-emerald-50 text-emerald-600'
-                              : 'bg-sky-50 text-sky-600'
-                          }`}
-                        >
-                          {selectedRecordForDetail.position}
-                        </span>
-                      </div>
-                      <h2 className="mt-2 text-xl font-bold text-gray-900">
-                        {selectedRecordForDetail.ticker || '종목명 없음'}
-                      </h2>
-                    </div>
-                    <div className="flex flex-col items-end gap-1 text-right text-xs">
-                      <div
-                        className={`flex items-baseline gap-1 text-base font-bold ${
-                          selectedRecordForDetail.profitPercent > 0
-                            ? 'text-red-400'
-                            : selectedRecordForDetail.profitPercent < 0
-                            ? 'text-sky-400'
-                            : 'text-gray-400'
-                        }`}
-                      >
-                        {selectedRecordForDetail.profitPercent ? (
-                          <>
-                            <span>{selectedRecordForDetail.profitPercent}%</span>
-                            {selectedRecordForDetail.realizedPnl && (
-                              <span className="text-xs font-medium text-gray-400">
-                                (${formatCurrency(selectedRecordForDetail.realizedPnl)})
-                              </span>
-                            )}
-                          </>
-                        ) : (
-                          <span className="text-gray-400">진행중</span>
-                        )}
-                      </div>
-                      {selectedRecordForDetail.closeDate && (
-                        <span className="flex items-center gap-1 text-[11px] text-gray-400">
-                          <Clock size={11} />
-                          {formatTimeDiff(selectedRecordForDetail.openDate, selectedRecordForDetail.closeDate)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 rounded-xl bg-gray-50 p-4 text-xs border border-gray-100">
-                    <div>
-                      <div className="flex items-center justify-between text-[11px] text-gray-400">
-                        <span>진입가</span>
-                      </div>
-                      <div className="mt-1 font-mono text-sm text-gray-800 font-medium">
-                        {selectedRecordForDetail.entryPrice
-                          ? `$${formatCurrency(selectedRecordForDetail.entryPrice)}`
-                          : '-'}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex items-center justify-between text-[11px] text-gray-400">
-                        <span>청산가</span>
-                      </div>
-                      <div className="mt-1 font-mono text-sm text-gray-800 font-medium">
-                        {selectedRecordForDetail.exitPrice
-                          ? `$${formatCurrency(selectedRecordForDetail.exitPrice)}`
-                          : '미청산'}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex items-center justify-between text-[11px] text-gray-400">
-                        <span>마진 / 레버리지</span>
-                      </div>
-                      <div className="mt-1 text-sm text-gray-800">
-                        ${formatCurrency(selectedRecordForDetail.margin)} / {selectedRecordForDetail.leverage}x
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex items-center justify-between text-[11px] text-gray-400">
-                        <span>청산 사유</span>
-                      </div>
-                      <div className="mt-1 text-sm text-gray-800">
-                        {selectedRecordForDetail.exitReason || '—'}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 flex flex-col gap-2 rounded-xl bg-amber-50/50 p-3 text-xs border border-amber-100">https://github.com/azu0021/ajou-notes/blob/main/app/page.tsx
-  <div className="flex items-center justify-between">
-    <div className="flex items-center gap-2 text-[11px] text-amber-600 font-medium">
-      <BookOpen size={13} />
-      <span>연결된 전략</span>
     </div>
-    {selectedStrategy && (
-      <span className="rounded-md bg-white px-2 py-0.5 text-[10px] text-amber-500 font-medium shadow-sm">
-        {selectedStrategy.title}
-      </span>
-    )}
-  </div>
-  {selectedStrategy ? (
-    <p className="whitespace-pre-line text-[11px] text-gray-600">
-      {selectedStrategy.description}
-    </p>
-  ) : (
-    <p className="text-[11px] text-gray-400">연결된 전략이 없어요.</p>
-  )}
-</div>
-                  <div className="mt-3 flex flex-1 flex-col">
-                    <div className="mb-1 flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-[11px] text-gray-400">
-                        <List size={13} />
-                        <span>메모</span>
-                      </div>
-                      <button
-                        onClick={() => {
-                          openEditRecord(selectedRecordForDetail);
-                        }}
-                        className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2.5 py-1 text-[11px] text-gray-500 transition hover:bg-gray-50"
-                      >
-                        <Edit2 size={11} />
-                        이 기록 수정
-                      </button>
-                    </div>
-                    <div className="flex-1 rounded-xl bg-gray-50 p-3 text-[11px] text-gray-700 border border-gray-100 leading-relaxed">
-                      {selectedRecordForDetail.memo?.trim() ? (
-                        <p className="whitespace-pre-wrap">{selectedRecordForDetail.memo}</p>
-                      ) : (
-                        <p className="text-gray-400">아직 메모가 없어요. 이 기록을 수정해서 생각을 적어둘 수 있어.</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-xs text-gray-400">
-                  <Clock size={20} className="text-gray-300" />
-                  <div className="space-y-1">
-                    <p>왼쪽에서 기록을 선택하면 여기에 상세 내용이 나와.</p>
-                    <p className="text-[11px] text-gray-400">전략, 진입/청산 이유, 감정 메모까지 한 번에 보기.</p>
-                  </div>
-                </div>
-              )
-            ) : (
-              <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-xs text-gray-400">
-                <Target size={20} className="text-amber-300" />
-                <div className="space-y-1">
-                  <p>자주 쓰는 패턴이나 체크리스트를 전략 노트로 쌓아두고,</p>
-                  <p className="text-[11px] text-gray-400">매매 기록과 연결해서 나중에 복기할 수 있어.</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </section>
+  );
+}
 
-        {/* Record Modal (Light Theme) */}
-        <Modal
-          isOpen={isRecordModalOpen}
-          onClose={() => {
-            setIsRecordModalOpen(false);
-            resetRecordForm();
-          }}
-          title={editingId ? '매매 기록 수정' : '새 매매 기록 추가'}
-        >
-          <form
-            className="space-y-3 text-xs"
-            onSubmit={(e) => {
-              e.preventDefault();
-              saveRecord();
-            }}
-          >
-            <div className="grid gap-2 md:grid-cols-2">
-              <div className="space-y-1.5">
-                <label className="block text-[11px] font-medium text-gray-500">진입 일시</label>
-                <input
-                  type="datetime-local"
-                  name="openDate"
-                  value={currentRecord.openDate}
-                  onChange={handleRecordChange}
-                  className="w-full rounded-lg bg-gray-50 px-2.5 py-2 text-xs text-gray-800 outline-none border border-gray-200 placeholder:text-gray-400 focus:ring-2"
-                  style={{ borderColor: '#e5e7eb' }}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="block text-[11px] font-medium text-gray-500">청산 일시 (선택)</label>
-                <input
-                  type="datetime-local"
-                  name="closeDate"
-                  value={currentRecord.closeDate}
-                  onChange={handleRecordChange}
-                  className="w-full rounded-lg bg-gray-50 px-2.5 py-2 text-xs text-gray-800 outline-none border border-gray-200 placeholder:text-gray-400 focus:ring-2"
-                  style={{ borderColor: '#e5e7eb' }}
-                />
-              </div>
-            </div>
+function StatsView({ records, Icons }) {
+  const closed = records.filter(r => r.status === 'Closed');
+  const wins = closed.filter(r => r.pnl > 0).length;
+  const total = closed.length;
+  const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
+  
+  const totalNetPnl = closed.reduce((acc, cur) => acc + (parseFloat(cur.realizedPnlValue) || 0), 0);
+  const totalFees = closed.reduce((acc, cur) => acc + (parseFloat(cur.fees) || 0), 0);
 
-            <div className="grid gap-2 md:grid-cols-[2fr_1fr]">
-              <div className="space-y-1.5">
-                <label className="block text-[11px] font-medium text-gray-500">종목</label>
-                <input
-                  type="text"
-                  name="ticker"
-                  value={currentRecord.ticker}
-                  onChange={handleRecordChange}
-                  placeholder="예: BTCUSDT, NVDA, TSLA..."
-                  className="w-full rounded-lg bg-gray-50 px-2.5 py-2 text-xs text-gray-800 outline-none border border-gray-200 placeholder:text-gray-400 focus:ring-2"
-                  style={{ borderColor: '#e5e7eb' }}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="block text-[11px] font-medium text-gray-500">포지션</label>
-                <div className="flex gap-1.5">
-                  {['Long', 'Short'].map((p) => (
-                    <button
-                      key={p}
-                      type="button"
-                      onClick={() => setCurrentRecord({ ...currentRecord, position: p })}
-                      className={`flex-1 rounded-lg border px-2 py-2 text-xs font-medium transition-all ${
-                        currentRecord.position === p
-                          ? p === 'Long'
-                            ? 'border-emerald-200 bg-emerald-50 text-emerald-600'
-                            : 'border-sky-200 bg-sky-50 text-sky-600'
-                          : 'border-gray-200 bg-white text-gray-400 hover:bg-gray-50'
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="grid gap-2 md:grid-cols-3">
-              <div className="space-y-1.5">
-                <label className="block text-[11px] font-medium text-gray-500">마진 ($)</label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    name="margin"
-                    value={currentRecord.margin}
-                    onChange={handleRecordChange}
-                    placeholder="예: 100"
-                    className="w-full rounded-lg bg-gray-50 px-2.5 py-2 pl-7 text-xs text-gray-800 outline-none border border-gray-200 placeholder:text-gray-400 focus:ring-2"
-                    style={{ borderColor: '#e5e7eb' }}
-                  />
-                  <DollarSign className="pointer-events-none absolute left-2.5 top-2.5 text-gray-400" size={12} />
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <label className="block text-[11px] font-medium text-gray-500">레버리지 (배)</label>
-                <input
-                  type="number"
-                  name="leverage"
-                  value={currentRecord.leverage}
-                  onChange={handleRecordChange}
-                  placeholder="예: 10"
-                  className="w-full rounded-lg bg-gray-50 px-2.5 py-2 text-xs text-gray-800 outline-none border border-gray-200 placeholder:text-gray-400 focus:ring-2"
-                  style={{ borderColor: '#e5e7eb' }}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="block text-[11px] font-medium text-gray-500">전략 선택 (선택)</label>
-                <select
-                  name="strategyId"
-                  value={currentRecord.strategyId}
-                  onChange={handleRecordChange}
-                  className="w-full rounded-lg bg-gray-50 px-2.5 py-2 text-xs text-gray-800 outline-none border border-gray-200 focus:ring-2"
-                  style={{ borderColor: '#e5e7eb' }}
-                >
-                  <option value="">연결 안 함</option>
-                  {strategies.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="grid gap-2 md:grid-cols-2">
-              <div className="space-y-1.5">
-                <label className="block text-[11px] font-medium text-gray-500">진입가</label>
-                <input
-                  type="number"
-                  name="entryPrice"
-                  value={currentRecord.entryPrice}
-                  onChange={handleRecordChange}
-                  placeholder="예: 100.5"
-                  className="w-full rounded-lg bg-gray-50 px-2.5 py-2 text-xs text-gray-800 outline-none border border-gray-200 placeholder:text-gray-400 focus:ring-2"
-                  style={{ borderColor: '#e5e7eb' }}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="block text-[11px] font-medium text-gray-500">청산가 (선택)</label>
-                <input
-                  type="number"
-                  name="exitPrice"
-                  value={currentRecord.exitPrice}
-                  onChange={handleRecordChange}
-                  placeholder="예: 110.2"
-                  className="w-full rounded-lg bg-gray-50 px-2.5 py-2 text-xs text-gray-800 outline-none border border-gray-200 placeholder:text-gray-400 focus:ring-2"
-                  style={{ borderColor: '#e5e7eb' }}
-                />
-              </div>
-            </div>
-
-            <div className="grid gap-2 md:grid-cols-3">
-              <div className="space-y-1.5">
-                <label className="block text-[11px] font-medium text-gray-500">수익률 (%)</label>
-                <input
-                  type="number"
-                  name="profitPercent"
-                  value={currentRecord.profitPercent}
-                  onChange={handleRecordChange}
-                  placeholder="자동 계산"
-                  className="w-full rounded-lg bg-gray-50 px-2.5 py-2 text-xs text-gray-800 outline-none border border-gray-200 placeholder:text-gray-400 focus:ring-2"
-                  style={{ borderColor: '#e5e7eb' }}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="block text-[11px] font-medium text-gray-500">실현손익 ($)</label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    name="realizedPnl"
-                    value={currentRecord.realizedPnl}
-                    onChange={handleRecordChange}
-                    placeholder="자동 계산"
-                    className={`w-full rounded-lg bg-gray-50 px-2.5 py-2 pl-7 text-xs outline-none border border-gray-200 placeholder:text-gray-400 focus:ring-2 ${
-                      Number(currentRecord.realizedPnl) > 0 ? 'text-red-500 font-medium' : 'text-sky-500 font-medium'
-                    }`}
-                    style={{ borderColor: '#e5e7eb' }}
-                  />
-                  <DollarSign className="pointer-events-none absolute left-2.5 top-2.5 text-gray-400" size={12} />
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <label className="block text-[11px] font-medium text-gray-500">청산 사유</label>
-                <div className="flex gap-1.5">
-                  {['TP Hit', 'SL Hit', 'Trailing Stop', 'Manual'].map((r) => (
-                    <button
-                      key={r}
-                      type="button"
-                      onClick={() => setCurrentRecord({ ...currentRecord, exitReason: r })}
-                      className={`flex-1 rounded-lg border px-1 py-2 text-[10px] transition-all ${
-                        currentRecord.exitReason === r
-                          ? 'border-amber-200 bg-amber-50 text-amber-600 font-medium'
-                          : 'border-gray-200 bg-white text-gray-400 hover:bg-gray-50'
-                      }`}
-                    >
-                      {r}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="block text-[11px] font-medium text-gray-500">메모</label>
-              <textarea
-                name="memo"
-                value={currentRecord.memo}
-                onChange={handleRecordChange}
-                rows={4}
-                placeholder="진입 이유, 손절/익절 기준, 당시 감정, 배운 점 등을 자유롭게 적어두면 좋아."
-                className="w-full rounded-lg bg-gray-50 px-2.5 py-2 text-xs text-gray-800 outline-none border border-gray-200 placeholder:text-gray-400 focus:ring-2"
-                style={{ borderColor: '#e5e7eb' }}
-              />
-            </div>
-
-            <div className="mt-3 flex justify-between gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  resetRecordForm();
-                  setIsRecordModalOpen(false);
-                }}
-                className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-[11px] text-gray-500 transition hover:bg-gray-50"
-              >
-                취소
-              </button>
-              <div className="flex gap-2">
-                {editingId && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setDeleteTarget({
-                        type: 'record',
-                        id: editingId,
-                        title: currentRecord.ticker || '기록',
-                      })
-                    }
-                    className="inline-flex items-center gap-1 rounded-lg bg-red-400 px-3 py-2 text-[11px] font-medium text-white shadow-md shadow-red-200 transition hover:bg-red-500"
-                  >
-                    <Trash2 size={12} />
-                    삭제
-                  </button>
-                )}
-                <button
-                  type="submit"
-                  className="inline-flex items-center gap-1 rounded-lg px-4 py-2 text-[11px] font-medium text-white shadow-md shadow-pink-200 transition hover:opacity-90"
-                  style={{ backgroundColor: '#FF9EAA' }}
-                >
-                  <Save size={12} />
-                  저장
-                </button>
-              </div>
-            </div>
-          </form>
-        </Modal>
-
-        {/* Strategy Modal (Light Theme) */}
-        <Modal
-          isOpen={isStrategyModalOpen}
-          onClose={() => {
-            setIsStrategyModalOpen(false);
-            setCurrentStrategy({ title: '', description: '' });
-            setEditingStrategyId(null);
-          }}
-          title={editingStrategyId ? '전략 노트 수정' : '새 전략 노트'}
-        >
-          <form
-            className="space-y-3 text-xs"
-            onSubmit={(e) => {
-              e.preventDefault();
-              saveStrategy();
-            }}
-          >
-            <div className="space-y-1.5">
-              <label className="block text-[11px] font-medium text-gray-500">전략 이름</label>
-              <input
-                type="text"
-                name="title"
-                value={currentStrategy.title}
-                onChange={handleStrategyChange}
-                placeholder="예: 추세 추종 브레이크아웃, 급등주 단타 패턴 1번..."
-                className="w-full rounded-lg bg-gray-50 px-2.5 py-2 text-xs text-gray-800 outline-none border border-gray-200 placeholder:text-gray-400 focus:border-amber-300 focus:ring-2 focus:ring-amber-100"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="block text-[11px] font-medium text-gray-500">전략 상세</label>
-              <textarea
-                name="description"
-                value={currentStrategy.description}
-                onChange={handleStrategyChange}
-                rows={6}
-                placeholder="- 진입 조건
-- 손절 라인
-- 분할 진입/청산 규칙
-- 종목/시장 필터
-- 과거 예시 등"
-                className="w-full rounded-lg bg-gray-50 px-2.5 py-2 text-xs text-gray-800 outline-none border border-gray-200 placeholder:text-gray-400 focus:border-amber-300 focus:ring-2 focus:ring-amber-100"
-              />
-            </div>
-            <div className="mt-3 flex justify-between gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsStrategyModalOpen(false);
-                  setCurrentStrategy({ title: '', description: '' });
-                  setEditingStrategyId(null);
-                }}
-                className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-[11px] text-gray-500 transition hover:bg-gray-50"
-              >
-                취소
-              </button>
-              <div className="flex gap-2">
-                {editingStrategyId && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setDeleteTarget({
-                        type: 'strategy',
-                        id: editingStrategyId,
-                        title: currentStrategy.title || '전략',
-                      })
-                    }
-                    className="inline-flex items-center gap-1 rounded-lg bg-red-400 px-3 py-2 text-[11px] font-medium text-white shadow-md shadow-red-200 transition hover:bg-red-500"
-                  >
-                    <Trash2 size={12} />
-                    삭제
-                  </button>
-                )}
-                <button
-                  type="submit"
-                  className="inline-flex items-center gap-1 rounded-lg bg-amber-400 px-4 py-2 text-[11px] font-medium text-white shadow-md shadow-amber-200 transition hover:bg-amber-500"
-                >
-                  <Save size={12} />
-                  저장
-                </button>
-              </div>
-            </div>
-          </form>
-        </Modal>
-
-        {/* Delete Modal */}
-        <DeleteModal
-          isOpen={!!deleteTarget}
-          onClose={() => setDeleteTarget(null)}
-          onConfirm={handleDelete}
-          title={deleteTarget?.title}
-        />
+  return (
+    <div className="space-y-6 animate-fade-in-up">
+      <h2 className="text-2xl font-bold text-gray-800 mb-6">나의 트레이딩 성적표 📊</h2>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard label="총 매매" value={`${total}회`} icon={<Icons.Dashboard size={18} />} color="bg-blue-50 text-blue-600" />
+        <StatCard label="승률" value={`${winRate}%`} icon={<Icons.Up size={18} />} color="bg-rose-50 text-rose-600" />
+        <StatCard label="순수익(Net)" value={`$${formatNumber(totalNetPnl)}`} icon={<Icons.Profit size={18} />} color={totalNetPnl >= 0 ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"} />
+        <StatCard label="총 수수료" value={`$${formatNumber(totalFees)}`} icon={<Icons.Fee size={18} />} color="bg-gray-100 text-gray-600" />
+      </div>
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-rose-100 text-center text-gray-400 text-sm">
+        상세 통계 준비 중...
       </div>
     </div>
+  );
+}
+
+function StrategiesView({ strategies }) {
+  return (
+    <div className="space-y-6 animate-fade-in-up">
+      <h2 className="text-2xl font-bold text-gray-800">나의 매매 전략 노트 📝</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {strategies.map((s, idx) => (
+          <div key={idx} className="bg-white p-6 rounded-2xl shadow-sm border border-rose-100 hover:border-rose-300 transition-all">
+            <h3 className="font-bold text-lg text-rose-500 mb-2">{s.title}</h3>
+            <p className="text-gray-600 text-sm leading-relaxed">{s.description}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ label, value, icon, color }) {
+  return (
+    <div className="bg-white p-5 rounded-2xl shadow-sm border border-rose-50 flex flex-col gap-2">
+      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${color} mb-1`}>{icon}</div>
+      <span className="text-gray-400 text-xs">{label}</span>
+      <span className="text-xl font-bold text-gray-800">{value}</span>
+    </div>
+  );
+}
+
+function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons }) {
+  const isLong = record.position === 'Long';
+  return (
+    <div className="bg-white rounded-2xl p-5 shadow-sm border border-rose-100 hover:shadow-lg transition-all relative group">
+      <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+        <button onClick={() => onEdit(record)} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-400 hover:text-rose-500"><Icons.Edit size={14} /></button>
+        <button onClick={() => onDelete(record)} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-400 hover:text-red-500"><Icons.Delete size={14} /></button>
+      </div>
+
+      <div className="flex items-center justify-between mb-4">
+        <span className={`text-xs font-bold px-2 py-1 rounded-md ${isLong ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+          {record.position.toUpperCase()} x{record.leverage}
+        </span>
+        <div className="flex items-center gap-2">
+          {record.exchange && <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">{record.exchange}</span>}
+          <span className="text-xs text-gray-400">{record.openDate.split('T')[0]}</span>
+        </div>
+      </div>
+
+      <h3 className="font-bold text-lg text-gray-800 mb-1 flex items-center gap-2">
+        <HighlightText text={record.symbol} highlight={searchTerm} />
+      </h3>
+      <div className={`${APP_CONFIG.theme.secondaryBg} text-xs ${APP_CONFIG.theme.accent} mb-4 inline-block px-2 py-0.5 rounded`}>
+         <HighlightText text={record.strategy || '전략 없음'} highlight={searchTerm} />
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 text-sm">
+        <div>
+          <div className="text-gray-400 text-xs">진입가</div>
+          <div className="font-mono font-medium">{formatNumber(record.entryPrice)}</div>
+        </div>
+        <div>
+          <div className="text-gray-400 text-xs">Margin</div>
+          <div className="font-mono font-medium">${formatNumber(record.margin)}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function HistoryRow({ record, onEdit, onDelete, HighlightText, searchTerm, Icons }) {
+  const isProfit = record.pnl > 0;
+  return (
+    <div className="bg-white p-4 rounded-xl border border-gray-100 hover:border-rose-200 transition-all flex flex-col md:flex-row md:items-center gap-4 group">
+      <div className="flex justify-between items-center md:hidden">
+        <span className="text-xs text-gray-400">{record.openDate.split('T')[0]}</span>
+        <div className="flex gap-2">
+           <button onClick={() => onEdit(record)} className="text-gray-400"><Icons.Edit size={14} /></button>
+           <button onClick={() => onDelete(record)} className="text-gray-400"><Icons.Delete size={14} /></button>
+        </div>
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${record.position === 'Long' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+            {record.position.charAt(0)}
+          </span>
+          <h4 className="font-bold text-gray-700 truncate w-24 md:w-auto">
+            <HighlightText text={record.symbol} highlight={searchTerm} />
+          </h4>
+          <span className="text-xs text-gray-400">x{record.leverage}</span>
+          {record.exchange && <span className="text-[10px] text-gray-400 border border-gray-100 px-1 rounded ml-1 hidden md:inline">{record.exchange}</span>}
+        </div>
+        <div className="text-xs text-gray-500 flex flex-wrap items-center gap-2">
+          <span>{record.strategy}</span>
+          {record.exitReason && <span className="bg-gray-100 px-1 rounded text-[10px] text-gray-400">{record.exitReason}</span>}
+          {record.exitMemo && <span className={`${APP_CONFIG.theme.accent} text-[10px] truncate max-w-[150px]`}>💬 {record.exitMemo}</span>}
+        </div>
+      </div>
+
+      <div className="flex justify-between md:justify-end items-center gap-6 md:w-1/2">
+        <div className="text-right">
+          <div className="text-[10px] text-gray-400">PNL %</div>
+          <div className={`font-bold font-mono ${isProfit ? 'text-green-500' : 'text-red-500'}`}>
+            {record.pnl > 0 ? '+' : ''}{record.pnl}%
+          </div>
+        </div>
+        <div className="text-right w-20">
+          <div className="text-[10px] text-gray-400">순수익($)</div>
+          <div className={`font-bold font-mono text-sm ${isProfit ? 'text-green-500' : 'text-red-500'}`}>
+            ${formatNumber(record.realizedPnlValue)}
+          </div>
+          {record.fees > 0 && <div className="text-[9px] text-gray-300">수수료 -${record.fees}</div>}
+        </div>
+        <div className="hidden md:flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+           <button onClick={() => onEdit(record)} className="p-2 hover:bg-rose-50 rounded-full text-gray-400 hover:text-rose-500"><Icons.Edit size={16} /></button>
+           <button onClick={() => onDelete(record)} className="p-2 hover:bg-rose-50 rounded-full text-gray-400 hover:text-red-500"><Icons.Delete size={16} /></button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exchanges, existingSymbols, Icons }) {
+  const [formData, setFormData] = useState({
+    symbol: '',
+    exchange: exchanges[0]?.name || '', // Default exchange
+    position: 'Long',
+    leverage: '1',
+    margin: '',
+    entryPrice: '',
+    entryType: 'Maker', // Maker or Taker
+    openDate: getCurrentDateTimeString(),
+    status: 'Open',
+    closePrice: '',
+    exitType: 'Taker', // Maker or Taker
+    exitReason: '',
+    closeDate: '',
+    strategy: strategies[0]?.title || '',
+    entryMemo: '', 
+    exitMemo: '',
+  });
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        ...initialData,
+        entryMemo: initialData.entryMemo || initialData.memo || '', 
+        exitMemo: initialData.exitMemo || '',
+        exchange: initialData.exchange || exchanges[0]?.name,
+        entryType: initialData.entryType || 'Maker',
+        exitType: initialData.exitType || 'Taker',
+      });
+    }
+  }, [initialData]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => {
+      const next = { ...prev, [name]: value };
+      if (name === 'closePrice') {
+        if (value && !prev.closeDate) {
+          next.status = 'Closed';
+          next.closeDate = getCurrentDateTimeString();
+        }
+      }
+      return next;
+    });
+  };
+
+  const handleStatusChange = (e) => {
+    const isClosed = e.target.checked;
+    setFormData(prev => ({
+      ...prev,
+      status: isClosed ? 'Closed' : 'Open',
+      closeDate: isClosed && !prev.closeDate ? getCurrentDateTimeString() : prev.closeDate
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm animate-fade-in">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto custom-scrollbar">
+        <div className="sticky top-0 bg-white z-10 px-6 py-4 border-b border-rose-100 flex justify-between items-center">
+          <h3 className="font-bold text-xl text-gray-800">{initialData ? '매매 기록 수정 ✏️' : '새 매매 기록 🌱'}</h3>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full"><Icons.Close size={20} className="text-gray-400"/></button>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* Exchange & Symbol */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-500 mb-1">거래소</label>
+              <select 
+                name="exchange" 
+                value={formData.exchange} 
+                onChange={handleChange} 
+                className="w-full p-2.5 bg-gray-50 rounded-xl border border-transparent focus:bg-white focus:border-rose-300 focus:outline-none text-sm"
+              >
+                {exchanges.map(ex => <option key={ex.id} value={ex.name}>{ex.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-500 mb-1">종목명</label>
+              <input 
+                list="symbol-list"
+                name="symbol"
+                value={formData.symbol}
+                onChange={(e) => setFormData({...formData, symbol: e.target.value.toUpperCase()})}
+                placeholder="BTC"
+                className="w-full p-2.5 bg-gray-50 rounded-xl border border-transparent focus:bg-white focus:border-rose-300 focus:outline-none text-sm font-bold uppercase"
+                required
+              />
+              <datalist id="symbol-list">
+                {existingSymbols.map(sym => <option key={sym} value={sym} />)}
+              </datalist>
+            </div>
+          </div>
+
+          {/* Position & Margin */}
+          <div className="flex gap-4">
+             <div className="w-1/2">
+                <label className="block text-xs font-bold text-gray-500 mb-1">포지션</label>
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setFormData({...formData, position: 'Long'})} className={`flex-1 py-2 rounded-xl text-sm font-bold transition-colors ${formData.position === 'Long' ? 'bg-green-100 text-green-600 ring-2 ring-green-200' : 'bg-gray-50 text-gray-400'}`}>Long</button>
+                  <button type="button" onClick={() => setFormData({...formData, position: 'Short'})} className={`flex-1 py-2 rounded-xl text-sm font-bold transition-colors ${formData.position === 'Short' ? 'bg-red-100 text-red-600 ring-2 ring-red-200' : 'bg-gray-50 text-gray-400'}`}>Short</button>
+                </div>
+             </div>
+             <div className="w-1/2">
+                <FormInput label="증거금 (Margin $)" name="margin" type="number" value={formData.margin} onChange={handleChange} placeholder="$" />
+             </div>
+          </div>
+
+          {/* Entry Info */}
+          <div className="bg-blue-50/50 p-4 rounded-2xl space-y-3">
+             <div className="flex justify-between items-center mb-1">
+                <span className="text-xs font-bold text-blue-400">진입 정보</span>
+                <div className="flex bg-white rounded-lg p-0.5 border border-blue-100">
+                  <button type="button" onClick={() => setFormData({...formData, entryType: 'Maker'})} className={`text-[10px] px-2 py-1 rounded ${formData.entryType === 'Maker' ? 'bg-blue-100 text-blue-600 font-bold' : 'text-gray-400'}`}>Maker</button>
+                  <button type="button" onClick={() => setFormData({...formData, entryType: 'Taker'})} className={`text-[10px] px-2 py-1 rounded ${formData.entryType === 'Taker' ? 'bg-blue-100 text-blue-600 font-bold' : 'text-gray-400'}`}>Taker</button>
+                </div>
+             </div>
+             <div className="grid grid-cols-2 gap-4">
+               <FormInput label="진입가" name="entryPrice" type="number" step="any" value={formData.entryPrice} onChange={handleChange} required />
+               <FormInput label="레버리지 (x)" name="leverage" type="number" value={formData.leverage} onChange={handleChange} required />
+             </div>
+             <FormInput label="오픈 시간" name="openDate" type="datetime-local" value={formData.openDate} onChange={handleChange} />
+             <div>
+               <label className="block text-xs font-bold text-gray-500 mb-1">전략 & 근거</label>
+               <div className="flex gap-2 mb-2">
+                 <select name="strategy" value={formData.strategy} onChange={handleChange} className="w-1/2 p-2 bg-white rounded-xl border border-blue-100 text-xs outline-none">
+                   <option value="">전략 선택</option>
+                   {strategies.map(s => <option key={s.id} value={s.title}>{s.title}</option>)}
+                   <option value="기타">기타</option>
+                 </select>
+               </div>
+               <textarea 
+                  name="entryMemo"
+                  value={formData.entryMemo}
+                  onChange={handleChange}
+                  placeholder="진입 근거 메모..."
+                  className="w-full p-2 bg-white rounded-xl border border-blue-100 text-xs resize-none h-16 outline-none"
+                />
+             </div>
+          </div>
+
+          {/* Exit Info */}
+          <div className="border-t border-dashed border-rose-200 my-2"></div>
+          <div className="space-y-4">
+             <div className="flex justify-between items-center">
+               <span className="text-sm font-bold text-gray-700">청산 정보 (선택)</span>
+               <label className="flex items-center gap-2 cursor-pointer select-none">
+                 <input 
+                   type="checkbox" 
+                   checked={formData.status === 'Closed'} 
+                   onChange={handleStatusChange} 
+                   className="w-5 h-5 rounded text-rose-500 focus:ring-rose-400 accent-rose-500 cursor-pointer"
+                 />
+                 <span className={`text-xs ${formData.status === 'Closed' ? 'text-rose-500 font-bold' : 'text-gray-500'}`}>포지션 종료됨</span>
+               </label>
+             </div>
+             
+             {formData.status === 'Closed' && (
+               <div className="animate-fade-in space-y-3 p-4 bg-rose-50/50 rounded-2xl">
+                 <div className="flex justify-between items-center mb-1">
+                    <span className="text-xs font-bold text-rose-400">청산 세부</span>
+                    <div className="flex bg-white rounded-lg p-0.5 border border-rose-100">
+                      <button type="button" onClick={() => setFormData({...formData, exitType: 'Maker'})} className={`text-[10px] px-2 py-1 rounded ${formData.exitType === 'Maker' ? 'bg-rose-100 text-rose-600 font-bold' : 'text-gray-400'}`}>Maker</button>
+                      <button type="button" onClick={() => setFormData({...formData, exitType: 'Taker'})} className={`text-[10px] px-2 py-1 rounded ${formData.exitType === 'Taker' ? 'bg-rose-100 text-rose-600 font-bold' : 'text-gray-400'}`}>Taker</button>
+                    </div>
+                 </div>
+                 <div className="grid grid-cols-2 gap-4">
+                   <FormInput label="청산가" name="closePrice" type="number" step="any" value={formData.closePrice} onChange={handleChange} placeholder="입력시 자동 계산" />
+                   <FormInput label="청산 시간" name="closeDate" type="datetime-local" value={formData.closeDate} onChange={handleChange} />
+                 </div>
+                 
+                 <div>
+                   <label className="block text-xs font-bold text-gray-500 mb-1">청산 기준</label>
+                   <div className="flex gap-2 flex-wrap">
+                     {['TP Hit', 'SL Hit', 'Trailing', 'Market'].map(reason => (
+                       <button 
+                         key={reason}
+                         type="button" 
+                         onClick={() => setFormData({...formData, exitReason: reason})}
+                         className={`px-3 py-1.5 rounded-lg text-xs transition-colors border ${formData.exitReason === reason ? 'bg-rose-400 text-white border-rose-400' : 'bg-white text-gray-500 border-gray-200 hover:border-rose-300'}`}
+                       >
+                         {reason}
+                       </button>
+                     ))}
+                   </div>
+                 </div>
+                 <textarea 
+                   name="exitMemo"
+                   value={formData.exitMemo}
+                   onChange={handleChange}
+                   placeholder="매매 복기 및 배운 점..."
+                   className="w-full p-3 bg-white rounded-xl border border-rose-200 focus:border-rose-400 focus:outline-none text-sm resize-none h-16"
+                 />
+               </div>
+             )}
+          </div>
+
+          <div className="pt-2">
+            <button type="submit" className={`${APP_CONFIG.theme.primary} ${APP_CONFIG.theme.primaryHover} w-full text-white font-bold py-3.5 rounded-xl shadow-lg shadow-rose-200 transition-all active:scale-[0.98]`}>
+              {initialData ? '수정 완료' : '기록 저장하기'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function FormInput({ label, ...props }) {
+  return (
+    <div>
+      <label className="block text-xs font-bold text-gray-500 mb-1">{label}</label>
+      <input 
+        className="w-full p-2.5 bg-gray-50 rounded-xl border border-transparent focus:bg-white focus:border-rose-300 focus:outline-none text-sm transition-all"
+        {...props}
+      />
+    </div>
+  );
+}
+
+function DeleteConfirmModal({ target, onClose, onConfirm, Icons }) {
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-fade-in">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center">
+        <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
+          <Icons.Delete size={24} />
+        </div>
+        <h3 className="font-bold text-lg text-gray-800 mb-2">기록을 삭제할까요?</h3>
+        <p className="text-gray-500 text-sm mb-6">
+          <span className="font-bold text-gray-700">{target.symbol}</span> 매매 기록이 영구적으로 삭제됩니다.
+        </p>
+        <div className="flex gap-3">
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-medium hover:bg-gray-50 transition-colors">취소</button>
+          <button onClick={onConfirm} className="flex-1 py-2.5 rounded-xl bg-red-500 text-white font-bold shadow-lg shadow-red-200 hover:bg-red-600 transition-colors">삭제하기</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SidebarItem({ icon, label, active, onClick }) {
+  return (
+    <button 
+      onClick={onClick}
+      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${active ? `${APP_CONFIG.theme.secondaryBg} ${APP_CONFIG.theme.accent} font-bold` : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'}`}
+    >
+      {icon}
+      <span className="text-sm">{label}</span>
+      {active && <div className="ml-auto w-1.5 h-1.5 bg-rose-500 rounded-full"></div>}
+    </button>
+  );
+}
+
+function NavButton({ icon, label, active, onClick }) {
+  return (
+    <button onClick={onClick} className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${active ? APP_CONFIG.theme.accent : 'text-gray-400'}`}>
+      {icon}
+      <span className="text-[10px] font-medium">{label}</span>
+    </button>
   );
 }
