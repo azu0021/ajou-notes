@@ -1272,7 +1272,6 @@ function SidebarItem({ icon, label, active, onClick }: any) {
     >
       {icon}
       <span className="text-sm">{label}</span>
-      {active && <div className="ml-auto w-1.5 h-1.5 bg-rose-400 rounded-full"></div>}
     </button>
   );
 }
