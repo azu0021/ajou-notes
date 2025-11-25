@@ -901,45 +901,80 @@ function StatCard({ label, value, icon, color }: any) {
 }
 
 function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons }: any) {
+  const [isSelected, setIsSelected] = useState(false); // 선택 상태 관리
   const isLong = record.position === 'Long';
+
   return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm border border-zinc-100 hover:shadow-lg transition-all relative group">
-      {/* 수정/삭제 버튼 */}
-      <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-        <button onClick={() => onEdit(record)} className="p-1.5 bg-white shadow-sm border border-zinc-100 rounded-full text-zinc-400 hover:text-rose-500"><Icons.Edit size={14} /></button>
-        <button onClick={() => onDelete(record)} className="p-1.5 bg-white shadow-sm border border-zinc-100 rounded-full text-zinc-400 hover:text-rose-500"><Icons.Delete size={14} /></button>
-      </div>
+    <div 
+      onClick={() => setIsSelected(!isSelected)} // 클릭 시 선택 상태 토글
+      className={`relative rounded-3xl p-5 border transition-all duration-200 cursor-pointer select-none
+        ${isSelected 
+          ? 'bg-rose-50 border-rose-200 shadow-inner' // 선택됐을 때: 연한 핑크 배경 + 테두리
+          : 'bg-white border-zinc-100 shadow-sm hover:shadow-md' // 평소: 흰 배경
+        }`}
+    >
+      {/* 수정/삭제 버튼 오버레이 (선택되었을 때만 등장) */}
+      {isSelected && (
+        <div className="absolute top-1/2 right-4 -translate-y-1/2 flex gap-2 z-10 animate-fade-in">
+           <button 
+             onClick={(e) => { e.stopPropagation(); onEdit(record); }} 
+             className="w-10 h-10 bg-white shadow-md rounded-full flex items-center justify-center text-zinc-400 hover:text-rose-500 hover:scale-110 transition-all"
+           >
+             <Icons.Edit size={18} />
+           </button>
+           <button 
+             onClick={(e) => { e.stopPropagation(); onDelete(record); }} 
+             className="w-10 h-10 bg-white shadow-md rounded-full flex items-center justify-center text-zinc-400 hover:text-red-500 hover:scale-110 transition-all"
+           >
+             <Icons.Delete size={18} />
+           </button>
+        </div>
+      )}
 
-      {/* 헤더 영역 수정됨 */}
-      <div className="flex items-center justify-between mb-4 pr-16 gap-2">
-        {/* [수정 1] whitespace-nowrap: 글자 줄바꿈 방지 / flex-shrink-0: 찌그러짐 방지 */}
-        <span className={`text-xs font-bold px-2 py-1 rounded-md whitespace-nowrap flex-shrink-0 ${isLong ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-          {record.position.toUpperCase()} x{record.leverage}
-        </span>
+      {/* 컨텐츠 영역 (선택되면 살짝 흐려지게 처리) */}
+      <div className={`transition-opacity duration-200 ${isSelected ? 'opacity-40 blur-[1px]' : 'opacity-100'}`}>
         
-        {/* [수정 2] 오른쪽 정보들도 한 줄 유지 */}
-        <div className="flex items-center gap-2 whitespace-nowrap overflow-hidden">
-          {record.exchange && <span className="text-[10px] bg-zinc-100 text-zinc-500 px-1.5 py-0.5 rounded flex-shrink-0">{record.exchange}</span>}
-          <span className="text-xs text-zinc-400 truncate">{record.openDate.split('T')[0]}</span>
+        {/* 1. 날짜 (최상단) */}
+        <div className="text-zinc-400 text-xs mb-1.5 font-medium">
+          {record.openDate.split('T')[0]}
         </div>
-      </div>
 
-      <h3 className="font-bold text-lg text-zinc-700 mb-1 flex items-center gap-2 truncate">
-        <HighlightText text={record.symbol} highlight={searchTerm} />
-      </h3>
-      <div className={`${APP_CONFIG.theme.secondaryBg} text-xs ${APP_CONFIG.theme.accent} mb-4 inline-block px-2 py-0.5 rounded truncate max-w-full`}>
-         <HighlightText text={record.strategy || '전략 없음'} highlight={searchTerm} />
-      </div>
+        {/* 2. 종목명 + 포지션 + 전략 (한 줄 배치) */}
+        <div className="flex items-center gap-2 mb-5 flex-wrap">
+          {/* 종목명 */}
+          <h3 className="text-2xl font-bold text-zinc-700 leading-none">
+            <HighlightText text={record.symbol} highlight={searchTerm} />
+          </h3>
 
-      <div className="grid grid-cols-2 gap-2 text-sm">
-        <div>
-          <div className="text-zinc-400 text-xs">진입가</div>
-          <div className="font-mono font-medium truncate">{formatNumber(record.entryPrice)}</div>
+          {/* 포지션 뱃지 */}
+          <span className={`px-2 py-1 rounded-lg text-[11px] font-bold tracking-tight whitespace-nowrap ${isLong ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+            {record.position.toUpperCase()} x{record.leverage}
+          </span>
+
+          {/* 전략 뱃지 */}
+          {record.strategy && (
+             <span className="bg-rose-50 text-rose-400 px-2 py-1 rounded-lg text-[11px] font-bold tracking-tight whitespace-nowrap truncate max-w-[100px]">
+               <HighlightText text={record.strategy} highlight={searchTerm} />
+             </span>
+          )}
         </div>
-        <div>
-          <div className="text-zinc-400 text-xs">Margin</div>
-          <div className="font-mono font-medium truncate">${formatNumber(record.margin)}</div>
+
+        {/* 3. 진입가 & 마진 데이터 */}
+        <div className="flex items-baseline gap-5">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-zinc-400 text-xs font-bold">진입가</span>
+            <span className="font-mono text-lg font-bold text-zinc-800 tracking-tight">
+              {formatNumber(record.entryPrice)}
+            </span>
+          </div>
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-zinc-300 text-xs font-medium">Margin</span>
+            <span className="font-mono text-lg font-bold text-zinc-800 tracking-tight">
+              ${formatNumber(record.margin)}
+            </span>
+          </div>
         </div>
+
       </div>
     </div>
   );
