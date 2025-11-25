@@ -379,7 +379,8 @@ export default function VeryDailyLog() {
       <div className="hidden md:flex fixed left-0 top-0 bottom-0 w-64 bg-white border-r border-rose-100 flex-col p-6 shadow-sm z-40">
         <div className="flex items-center gap-2 mb-10">
           <div className={`w-8 h-8 ${APP_CONFIG.theme.primary} rounded-lg flex items-center justify-center text-white font-bold shadow-md shadow-rose-200`}>V</div>
-          <h1 className="text-xl font-bold text-gray-800 tracking-tight">Very Daily Log</h1>
+          <h1 className="text-xl text-gray-700 tracking-tight">
+            <span className="font-normal">Very</span> <span className="font-bold">Daily Log</span></h1>
         </div>
         
         <nav className="flex-1 space-y-2">
