@@ -48,6 +48,7 @@ import {
   Coins,
   ArrowRightLeft,
   MessageSquareQuote,
+  Image,
 } from 'lucide-react';
 
 /**
@@ -78,6 +79,7 @@ const APP_CONFIG = {
     Delete: Trash2,
     Edit: Edit2,
     Close: X,
+    Chart: Image,
     Quote: MessageSquareQuote,
     Down: ChevronDown,
     Up: TrendingUp,
@@ -1072,6 +1074,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
     strategy: strategies[0]?.title || '',
     entryMemo: '', 
     exitMemo: '',
+    chartImage: '', // [NEW] 이미지 저장용
   });
 
   useEffect(() => {
@@ -1083,6 +1086,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
         exchange: initialData.exchange || exchanges[0]?.name,
         entryType: initialData.entryType || 'Maker',
         exitType: initialData.exitType || 'Taker',
+        chartImage: initialData.chartImage || '', // 이미지 데이터 불러오기
       });
     }
   }, [initialData]);
@@ -1099,6 +1103,18 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
       }
       return next;
     });
+  };
+
+  // [NEW] 이미지 파일 처리 함수
+  const handleImageChange = (e: any) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({ ...prev, chartImage: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleStatusChange = (e: any) => {
@@ -1128,7 +1144,6 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
           {/* Exchange & Symbol */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              {/* [수정됨] CustomSelect로 깔끔하게 교체 */}
               <CustomSelect 
                 label="거래소" 
                 name="exchange" 
@@ -1146,7 +1161,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                 value={formData.symbol}
                 onChange={(e) => setFormData({...formData, symbol: e.target.value.toUpperCase()})}
                 placeholder="BTC"
-                className="w-full p-2.5 bg-zinc-50 rounded-xl border border-transparent focus:bg-white focus:border-rose-300 focus:outline-none text-sm font-bold uppercase"
+                className="w-full p-2.5 bg-white rounded-xl border border-zinc-200 focus:border-rose-300 focus:outline-none text-sm font-bold uppercase transition-all"
                 required
               />
               <datalist id="symbol-list">
@@ -1160,8 +1175,8 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
              <div className="w-1/2">
                 <label className="block text-xs font-bold text-zinc-500 mb-1">포지션</label>
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => setFormData({...formData, position: 'Long'})} className={`flex-1 py-2 rounded-xl text-sm font-bold transition-colors ${formData.position === 'Long' ? 'bg-green-100 text-green-600 ring-2 ring-green-200' : 'bg-zinc-50 text-zinc-400'}`}>Long</button>
-                  <button type="button" onClick={() => setFormData({...formData, position: 'Short'})} className={`flex-1 py-2 rounded-xl text-sm font-bold transition-colors ${formData.position === 'Short' ? 'bg-red-100 text-red-600 ring-2 ring-red-200' : 'bg-zinc-50 text-zinc-400'}`}>Short</button>
+                  <button type="button" onClick={() => setFormData({...formData, position: 'Long'})} className={`flex-1 py-2 rounded-xl text-sm font-bold transition-colors ${formData.position === 'Long' ? 'bg-green-100 text-green-600 ring-2 ring-green-200' : 'bg-white border border-zinc-200 text-zinc-400'}`}>Long</button>
+                  <button type="button" onClick={() => setFormData({...formData, position: 'Short'})} className={`flex-1 py-2 rounded-xl text-sm font-bold transition-colors ${formData.position === 'Short' ? 'bg-red-100 text-red-600 ring-2 ring-red-200' : 'bg-white border border-zinc-200 text-zinc-400'}`}>Short</button>
                 </div>
              </div>
              <div className="w-1/2">
@@ -1185,7 +1200,6 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
              </div>
              <FormInput label="오픈 시간" name="openDate" type="datetime-local" value={formData.openDate} onChange={handleChange} />
              <div>
-               {/* [수정됨] CustomSelect로 교체 */}
                <CustomSelect 
                  label="전략 & 근거"
                  name="strategy"
@@ -1196,14 +1210,40 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                  icon={Icons.Down}
                />
                <div className="mt-3">
+                 {/* [수정] 메모장: 흰색 배경 + Rose 테두리 */}
                  <textarea 
                     name="entryMemo"
                     value={formData.entryMemo}
                     onChange={handleChange}
-                    placeholder="진입 근거 메모..."
-                    className="w-full p-3 bg-white rounded-xl border border-zinc-200 focus:border-rose-300 outline-none text-sm resize-none h-20 placeholder-zinc-300"
+                    placeholder="진입 근거 및 시나리오..."
+                    className="w-full p-3 bg-white rounded-xl border border-rose-200 focus:border-rose-400 outline-none text-sm resize-none h-20 placeholder-zinc-300 transition-colors"
                   />
                </div>
+             </div>
+
+             {/* [NEW] 차트 이미지 첨부 영역 */}
+             <div className="mt-2">
+                <label className="block text-xs font-bold text-zinc-500 mb-2">차트 스크린샷</label>
+                {!formData.chartImage ? (
+                  <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-zinc-300 rounded-xl cursor-pointer hover:bg-zinc-100 hover:border-rose-300 transition-colors bg-white">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <Icons.Chart className="w-6 h-6 text-zinc-400 mb-1" />
+                      <p className="text-xs text-zinc-500">클릭하여 이미지 업로드</p>
+                    </div>
+                    <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
+                  </label>
+                ) : (
+                  <div className="relative w-full rounded-xl overflow-hidden border border-zinc-200 group">
+                    <img src={formData.chartImage} alt="Chart" className="w-full h-auto object-cover max-h-48" />
+                    <button 
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, chartImage: '' }))}
+                      className="absolute top-2 right-2 p-1 bg-black/50 text-white rounded-full hover:bg-red-500 transition-colors"
+                    >
+                      <Icons.Close size={16} />
+                    </button>
+                  </div>
+                )}
              </div>
           </div>
 
@@ -1253,12 +1293,13 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                      ))}
                    </div>
                  </div>
+                 {/* [수정] 메모장: Rose 테두리 통일 */}
                  <textarea 
                    name="exitMemo"
                    value={formData.exitMemo}
                    onChange={handleChange}
                    placeholder="매매 복기 및 배운 점..."
-                   className="w-full p-3 bg-white rounded-xl border border-rose-200 focus:border-rose-400 focus:outline-none text-sm resize-none h-16"
+                   className="w-full p-3 bg-white rounded-xl border border-rose-200 focus:border-rose-400 focus:outline-none text-sm resize-none h-20 placeholder-zinc-300"
                  />
                </div>
              )}
@@ -1275,38 +1316,47 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
   );
 }
 
+// [수정] 흰색 배경과 연한 테두리 적용
 function FormInput({ label, ...props }: any) {
   return (
     <div>
       <label className="block text-xs font-bold text-zinc-500 mb-1">{label}</label>
       <input 
-        className="w-full p-2.5 bg-zinc-50 rounded-xl border border-transparent focus:bg-white focus:border-rose-300 focus:outline-none text-sm transition-all"
+        className="w-full p-2.5 bg-white rounded-xl border border-zinc-200 focus:border-rose-300 focus:outline-none text-sm transition-all font-medium text-zinc-700"
         {...props}
       />
     </div>
   );
 }
 
-function DeleteConfirmModal({ target, onClose, onConfirm, Icons }: any) {
+// [수정] 흰색 배경 적용
+function CustomSelect({ label, value, onChange, options, placeholder, name, icon: Icon }: any) {
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center">
-        <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-rose-400">
-          <Icons.Delete size={24} />
-        </div>
-        <h3 className="font-bold text-lg text-zinc-700 mb-2">기록을 삭제할까요?</h3>
-        <p className="text-zinc-500 text-sm mb-6">
-          <span className="font-bold text-zinc-700">{target.symbol}</span> 매매 기록이 영구적으로 삭제됩니다.
-        </p>
-        <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-zinc-200 text-zinc-600 font-medium hover:bg-zinc-50 transition-colors">취소</button>
-          <button onClick={onConfirm} className="flex-1 py-2.5 rounded-xl bg-rose-400 text-white font-bold shadow-lg shadow-red-200 hover:bg-red-600 transition-colors">삭제하기</button>
+    <div>
+      {label && <label className="block text-xs font-bold text-zinc-500 mb-1">{label}</label>}
+      <div className="relative w-full">
+        <select
+          name={name}
+          value={value}
+          onChange={onChange}
+          className="w-full bg-white rounded-xl px-4 py-3 pr-10 text-sm font-bold text-zinc-700 outline-none border border-zinc-200 focus:border-rose-300 transition-colors appearance-none cursor-pointer"
+        >
+          {placeholder && <option value="" disabled>{placeholder}</option>}
+          {options.map((opt: any) => {
+            const val = typeof opt === 'object' ? (opt.name || opt.title) : opt;
+            const text = typeof opt === 'object' ? (opt.name || opt.title) : opt;
+            const key = typeof opt === 'object' ? (opt.id || opt.name || opt.title) : opt;
+            return <option key={key} value={val}>{text}</option>;
+          })}
+        </select>
+        
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400">
+          {Icon ? <Icon size={16} /> : <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>}
         </div>
       </div>
     </div>
   );
 }
-
 function SidebarItem({ icon, label, active, onClick }: any) {
   return (
     <button 
