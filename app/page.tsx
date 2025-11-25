@@ -47,7 +47,7 @@ import {
   Building2,
   Coins,
   ArrowRightLeft,
-  MessageSquareQuote,
+  MessageSquareQuote, // 문구 수정용 아이콘 추가
 } from 'lucide-react';
 
 /**
@@ -57,24 +57,41 @@ import {
  */
 const APP_CONFIG = {
   theme: {
-    primary: 'bg-rose-400',
-    primaryHover: 'hover:bg-rose-500',
-    // [변경] 배경색을 연한 그레이로 변경
-    secondaryBg: 'bg-gray-50',
-    cardBg: 'bg-white',
-    textMain: 'text-zinc-700',
-    textSub: 'text-gray-500',
-    accent: 'text-rose-500',
-    highlight: 'bg-yellow-200',
-    // [변경] 사이드바 배경을 흰색으로 변경 (깔끔함 강조)
-    sidebarBg: 'bg-white', 
-  },
-  icons: {
-    Dashboard: Star,
-    Stats: PieChart,
-    Strategies: BookOpen,
-    Settings: Pin,
+    // [Primary Color] 포인트 색상 -> 연한 핑크 (bg-pink-400)
+    primary: 'bg-pink-400',
     
+    // [Primary Hover] 호버 색상
+    primaryHover: 'hover:bg-pink-500',
+    
+    // [Secondary Background] 앱 전체 배경색 -> 차분한 그레이 (bg-gray-50)
+    secondaryBg: 'bg-gray-50', 
+    
+    // [Sidebar/Header Background] 사이드바 배경색 -> 흰색 (bg-white)
+    sidebarBg: 'bg-white',
+
+    // [Card Background] 카드 배경색 (흰색 유지)
+    cardBg: 'bg-white',
+    
+    // [Text Main] 기본 글자 색상
+    textMain: 'text-zinc-700',
+    
+    // [Text Sub] 보조 글자 색상
+    textSub: 'text-gray-500',
+    
+    // [Accent Text] 강조 텍스트 (연한 핑크)
+    accent: 'text-pink-400',
+    
+    // [Highlight] 형광펜 효과
+    highlight: 'bg-yellow-200',
+  },
+  // 2. 아이콘 매핑
+  icons: {
+    Dashboard: Star,            
+    Stats: PieChart,            
+    Strategies: BookOpen,       
+    Settings: Pin,              
+    
+    // -- 기능 버튼 --
     Add: Plus,
     Search: Search,
     Export: Download,
@@ -83,6 +100,7 @@ const APP_CONFIG = {
     Close: X,
     Quote: MessageSquareQuote,
 
+    // -- UI 요소 --
     Down: ChevronDown,
     Up: TrendingUp,
     DownTrend: TrendingDown,
@@ -154,6 +172,7 @@ export default function VeryDailyLog() {
   const [records, setRecords] = useState<any[]>([]);
   const [strategies, setStrategies] = useState(DEFAULT_STRATEGIES);
   const [exchanges, setExchanges] = useState(DEFAULT_EXCHANGES);
+  // [NEW] 사용자 문구 상태 추가 (기본값 설정)
   const [userQuote, setUserQuote] = useState("기록이 쌓여 실력이 됩니다.");
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -203,7 +222,7 @@ export default function VeryDailyLog() {
     return () => unsubscribe();
   }, [user]);
 
-  // Settings Fetching
+  // Settings Fetching (거래소 & 문구)
   useEffect(() => {
     if (!user) return;
     const fetchSettings = async () => {
@@ -213,7 +232,7 @@ export default function VeryDailyLog() {
         if (docSnap.exists()) {
           const data = docSnap.data();
           if (data.exchanges) setExchanges(data.exchanges);
-          if (data.quote) setUserQuote(data.quote);
+          if (data.quote) setUserQuote(data.quote); // 문구 불러오기
         }
       } catch (e) {
         console.error("Settings Error:", e);
@@ -234,6 +253,7 @@ export default function VeryDailyLog() {
     }
   };
 
+  // [NEW] 문구 저장 함수
   const handleSaveQuote = async (newQuote: string) => {
     if (!user) return;
     try {
@@ -246,6 +266,7 @@ export default function VeryDailyLog() {
     }
   };
 
+  // --- Derived State ---
   const uniqueSymbols = useMemo(() => {
     const symbols = new Set(records.map(r => r.symbol?.toUpperCase()).filter(Boolean));
     return Array.from(symbols).sort();
@@ -396,7 +417,7 @@ export default function VeryDailyLog() {
             <span className="text-4xl font-light tracking-tight mb-1">Very</span>
             <div className="flex items-start gap-1">
               <span className="text-4xl font-bold tracking-tight">Daily Log</span>
-              <div className="w-2.5 h-2.5 bg-rose-300 rounded-full mt-2"></div>
+              <div className={`w-2.5 h-2.5 ${APP_CONFIG.theme.primary} rounded-full mt-2`}></div>
             </div>
           </div>
         </div>
@@ -431,11 +452,12 @@ export default function VeryDailyLog() {
             uniqueSymbols={uniqueSymbols}
             HighlightText={HighlightText}
             Icons={Icons}
-            userQuote={userQuote}
+            userQuote={userQuote} // 문구 전달
           />
         )}
         {activeTab === 'stats' && <StatsView records={records} Icons={Icons} />}
         {activeTab === 'strategies' && <StrategiesView strategies={strategies} />}
+        {/* 설정 뷰에 문구와 저장 함수 전달 */}
         {activeTab === 'settings' && (
           <SettingsView 
             exchanges={exchanges} 
@@ -485,8 +507,7 @@ function DashboardView({
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <div className="flex flex-col">
-            {/* [변경] 폰트 크기 키우고 (text-3xl), 아래 간격 추가 (mb-2) */}
-            <h1 className="text-3xl font-bold text-zinc-600 mb-2">😎</h1>
+            <h1 className="text-3xl font-bold text-zinc-600 mb-2">오늘의 싸움</h1>
             <p className={`${APP_CONFIG.theme.accent} text-sm font-medium`}>{userQuote}</p>
           </div>
         </div>
@@ -510,7 +531,7 @@ function DashboardView({
       <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
         <button 
           onClick={() => setSelectedSymbol('ALL')}
-          className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${selectedSymbol === 'ALL' ? 'bg-rose-500 text-white shadow-md shadow-rose-200' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+          className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${selectedSymbol === 'ALL' ? 'bg-gray-700 text-white shadow-md' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
         >
           ALL
         </button>
@@ -518,7 +539,7 @@ function DashboardView({
           <button 
             key={sym}
             onClick={() => setSelectedSymbol(sym)}
-            className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${selectedSymbol === sym ? 'bg-rose-500 text-white shadow-md shadow-rose-200' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+            className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${selectedSymbol === sym ? 'bg-gray-700 text-white shadow-md' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
           >
             {sym}
           </button>
@@ -528,17 +549,18 @@ function DashboardView({
       {/* Open Positions */}
       <section>
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <div className="w-1 h-5 bg-rose-400 rounded-full"></div>
+          <div className="flex items-center gap-2">
+            {/* [수정] 원형 포인트에 테마 색상 적용 */}
+            <div className={`w-2 h-2 ${APP_CONFIG.theme.primary} rounded-full`}></div>
             <h3 className="font-bold text-lg text-gray-700">진행 중인 포지션 ({openPositions.length})</h3>
           </div>
           
-          {/* 기록하기 버튼 */}
+          {/* [수정] 기록하기 버튼: 텍스트 제거하고 아이콘만 남김 */}
           <button 
             onClick={onAdd}
-            className={`${APP_CONFIG.theme.primary} ${APP_CONFIG.theme.primaryHover} text-white px-3 py-1.5 rounded-xl shadow-md flex items-center gap-1 text-xs font-bold transition-transform active:scale-95 whitespace-nowrap`}
+            className={`${APP_CONFIG.theme.primary} ${APP_CONFIG.theme.primaryHover} text-white p-2 rounded-xl shadow-md flex items-center justify-center transition-transform active:scale-95`}
           >
-            <Icons.Add size={14} /> 기록하기
+            <Icons.Add size={20} />
           </button>
         </div>
         
@@ -566,19 +588,22 @@ function DashboardView({
       {/* Closed Records */}
       <section>
         <details className="group" open={true}>
-          <summary className="list-none cursor-pointer mb-3">
-            <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:border-gray-300 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="w-1 h-5 bg-gray-300 group-open:bg-rose-400 transition-colors rounded-full"></div>
+          <summary className="list-none cursor-pointer mb-3 select-none">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {/* [수정] 원형 포인트 */}
+                <div className="w-2 h-2 bg-gray-300 group-open:bg-rose-400 rounded-full transition-colors"></div>
                 <h3 className="font-bold text-lg text-gray-700">매매 기록 보관함 ({closedRecords.length})</h3>
               </div>
               <Icons.Down className="text-gray-400 group-open:rotate-180 transition-transform" />
             </div>
           </summary>
           
-          <div className="mt-4 space-y-3">
+          <div className="space-y-3">
             {closedRecords.length === 0 ? (
-              <div className="text-center p-8 text-gray-400 text-sm">아직 완료된 매매 기록이 없어요.</div>
+              <div className="text-center p-8 text-gray-400 text-sm bg-white border border-dashed border-gray-200 rounded-2xl">
+                아직 완료된 매매 기록이 없어요.
+              </div>
             ) : (
               closedRecords.map((record: any) => (
                 <HistoryRow 
