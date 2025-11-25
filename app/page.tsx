@@ -947,7 +947,7 @@ function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons 
           </h3>
 
           {/* 포지션 뱃지 */}
-          <span className={`px-2 py-1 rounded-lg text-[11px] font-bold tracking-tight whitespace-nowrap ${isLong ? 'bg-zinc-100 text-grin-400' : 'bg-zinc-100 text-rose-400'}`}>
+          <span className={`px-2 py-1 rounded-lg text-[11px] font-bold tracking-tight whitespace-nowrap ${isLong ? 'bg-green-400 text-white' : 'bg-rose-400 text-white'}`}>
             {record.position.toUpperCase()} x{record.leverage}
           </span>
 
@@ -1172,7 +1172,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
           {/* Entry Info */}
           <div className="bg-zinc-50 p-4 rounded-2xl space-y-3">
              <div className="flex justify-between items-center mb-1">
-                <span className="text-xs font-bold text-blue-400">진입 정보</span>
+                <span className="text-xs font-bold text-rose-400">진입 정보</span>
                 <ToggleSwitch 
                   options={['Maker', 'Taker']} 
                   value={formData.entryType} 
