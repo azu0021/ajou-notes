@@ -63,8 +63,8 @@ const APP_CONFIG = {
     // [Primary Hover] 호버 색상
     primaryHover: 'hover:bg-pink-500',
     
-    // [Secondary Background] 앱 전체 배경색 -> 차분한 그레이 (bg-gray-50)
-    secondaryBg: 'bg-gray-50', 
+    // [Secondary Background] 앱 전체 배경색 -> 차분한 그레이 (bg-zinc-50)
+    secondaryBg: 'bg-zinc-50', 
     
     // [Sidebar/Header Background] 사이드바 배경색 -> 흰색 (bg-white)
     sidebarBg: 'bg-white',
@@ -76,7 +76,7 @@ const APP_CONFIG = {
     textMain: 'text-zinc-700',
     
     // [Text Sub] 보조 글자 색상
-    textSub: 'text-gray-500',
+    textSub: 'text-zinc-500',
     
     // [Accent Text] 강조 텍스트 (연한 핑크)
     accent: 'text-pink-400',
@@ -402,18 +402,18 @@ export default function VeryDailyLog() {
   return (
     <div className={`min-h-screen ${APP_CONFIG.theme.secondaryBg} pb-20 md:pb-0 md:pl-64 transition-all duration-300`}>
       {/* Mobile Nav */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 flex justify-around p-3 pb-safe">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-zinc-200 z-50 flex justify-around p-3 pb-safe">
         <NavButton icon={<Icons.Dashboard size={20}/>} label="일지" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
         <NavButton icon={<Icons.Stats size={20}/>} label="통계" active={activeTab === 'stats'} onClick={() => setActiveTab('stats')} />
         <NavButton icon={<Icons.Settings size={20}/>} label="설정" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
       </div>
 
       {/* Desktop Sidebar */}
-      <div className={`hidden md:flex fixed left-0 top-0 bottom-0 w-64 ${APP_CONFIG.theme.sidebarBg} border-r border-gray-200 flex-col p-6 shadow-sm z-40`}>
+      <div className={`hidden md:flex fixed left-0 top-0 bottom-0 w-64 ${APP_CONFIG.theme.sidebarBg} border-r border-zinc-200 flex-col p-6 shadow-sm z-40`}>
         
         {/* 로고 영역 */}
         <div className="mb-10 pl-1">
-          <div className="flex flex-col text-gray-700 leading-none">
+          <div className="flex flex-col text-zinc-700 leading-none">
             <span className="text-4xl font-light tracking-tight mb-1">Very</span>
             <div className="flex items-start gap-1">
               <span className="text-4xl font-bold tracking-tight">Daily Log</span>
@@ -429,8 +429,8 @@ export default function VeryDailyLog() {
           <SidebarItem icon={<Icons.Settings size={18}/>} label="환경 설정" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
         </nav>
         
-        <div className="pt-6 border-t border-gray-200">
-           <button onClick={handleExportCSV} className="flex items-center gap-2 text-sm text-gray-500 hover:text-rose-500 transition-colors w-full p-2 rounded-lg hover:bg-gray-50">
+        <div className="pt-6 border-t border-zinc-200">
+           <button onClick={handleExportCSV} className="flex items-center gap-2 text-sm text-zinc-500 hover:text-rose-500 transition-colors w-full p-2 rounded-lg hover:bg-zinc-50">
              <Icons.Export size={16} /> 엑셀 다운로드
            </button>
         </div>
@@ -515,13 +515,13 @@ function DashboardView({
         {/* 검색창 영역 */}
         <div className="flex items-center gap-3 w-full md:w-auto">
           <div className="relative flex-1 md:w-64">
-            <Icons.Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+            <Icons.Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
             <input 
               type="text" 
               placeholder="종목, 메모, 거래소 검색..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 transition-shadow placeholder-gray-300"
+              className="w-full pl-9 pr-4 py-2 bg-white border border-zinc-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 transition-shadow placeholder-zinc-300"
             />
           </div>
         </div>
@@ -531,7 +531,7 @@ function DashboardView({
       <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
         <button 
           onClick={() => setSelectedSymbol('ALL')}
-          className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${selectedSymbol === 'ALL' ? 'bg-gray-700 text-white shadow-md' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+          className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${selectedSymbol === 'ALL' ? 'bg-zinc-700 text-white shadow-md' : 'bg-white text-zinc-500 hover:bg-zinc-50'}`}
         >
           ALL
         </button>
@@ -539,7 +539,7 @@ function DashboardView({
           <button 
             key={sym}
             onClick={() => setSelectedSymbol(sym)}
-            className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${selectedSymbol === sym ? 'bg-gray-700 text-white shadow-md' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+            className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${selectedSymbol === sym ? 'bg-zinc-700 text-white shadow-md' : 'bg-white text-zinc-500 hover:bg-zinc-50'}`}
           >
             {sym}
           </button>
@@ -552,7 +552,7 @@ function DashboardView({
           <div className="flex items-center gap-2">
             {/* [수정] 원형 포인트에 테마 색상 적용 */}
             <div className={`w-2 h-2 ${APP_CONFIG.theme.primary} rounded-full`}></div>
-            <h3 className="font-bold text-lg text-gray-700">진행 중인 포지션 ({openPositions.length})</h3>
+            <h3 className="font-bold text-lg text-zinc-700">진행 중인 포지션 ({openPositions.length})</h3>
           </div>
           
           {/* [수정] 기록하기 버튼: 텍스트 제거하고 아이콘만 남김 */}
@@ -565,7 +565,7 @@ function DashboardView({
         </div>
         
         {openPositions.length === 0 ? (
-          <div className="bg-white border border-dashed border-gray-200 rounded-2xl p-8 text-center text-gray-400 text-sm">
+          <div className="bg-white border border-dashed border-zinc-200 rounded-2xl p-8 text-center text-zinc-400 text-sm">
             현재 보유 중인 포지션이 없어요 🕊️
           </div>
         ) : (
@@ -592,16 +592,16 @@ function DashboardView({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {/* [수정] 원형 포인트 */}
-                <div className="w-2 h-2 bg-gray-300 group-open:bg-rose-400 rounded-full transition-colors"></div>
-                <h3 className="font-bold text-lg text-gray-700">매매 기록 보관함 ({closedRecords.length})</h3>
+                <div className="w-2 h-2 bg-zinc-300 group-open:bg-rose-400 rounded-full transition-colors"></div>
+                <h3 className="font-bold text-lg text-zinc-700">매매 기록 보관함 ({closedRecords.length})</h3>
               </div>
-              <Icons.Down className="text-gray-400 group-open:rotate-180 transition-transform" />
+              <Icons.Down className="text-zinc-400 group-open:rotate-180 transition-transform" />
             </div>
           </summary>
           
           <div className="space-y-3">
             {closedRecords.length === 0 ? (
-              <div className="text-center p-8 text-gray-400 text-sm bg-white border border-dashed border-gray-200 rounded-2xl">
+              <div className="text-center p-8 text-zinc-400 text-sm bg-white border border-dashed border-zinc-200 rounded-2xl">
                 아직 완료된 매매 기록이 없어요.
               </div>
             ) : (
@@ -662,11 +662,11 @@ function SettingsView({ exchanges, onSave, Icons, userQuote, onSaveQuote }: any)
     <div className="space-y-6 animate-fade-in-up max-w-2xl mx-auto pb-20">
       <h2 className="text-2xl font-bold text-zinc-700 mb-6">환경 설정 ⚙️</h2>
       
-      <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-        <h3 className="font-bold text-lg text-gray-700 mb-4 flex items-center gap-2">
+      <div className="bg-white p-5 rounded-2xl shadow-sm border border-zinc-100">
+        <h3 className="font-bold text-lg text-zinc-700 mb-4 flex items-center gap-2">
           <Icons.Quote size={20} className="text-rose-400"/> 메인 문구 설정
         </h3>
-        <p className="text-xs text-gray-500 mb-4">
+        <p className="text-xs text-zinc-500 mb-4">
           대시보드 상단에 표시될 나만의 다짐이나 명언을 적어보세요.
         </p>
         <div className="flex gap-2">
@@ -675,7 +675,7 @@ function SettingsView({ exchanges, onSave, Icons, userQuote, onSaveQuote }: any)
             value={quoteInput}
             onChange={(e) => setQuoteInput(e.target.value)}
             placeholder="기록이 쌓여 실력이 됩니다."
-            className="flex-1 bg-gray-50 rounded-xl px-4 py-3 text-sm outline-none border border-transparent focus:bg-white focus:border-rose-300 transition-colors"
+            className="flex-1 bg-zinc-50 rounded-xl px-4 py-3 text-sm outline-none border border-transparent focus:bg-white focus:border-rose-300 transition-colors"
           />
           <button 
             onClick={() => onSaveQuote(quoteInput)}
@@ -686,57 +686,57 @@ function SettingsView({ exchanges, onSave, Icons, userQuote, onSaveQuote }: any)
         </div>
       </div>
 
-      <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-        <h3 className="font-bold text-lg text-gray-700 mb-4 flex items-center gap-2">
+      <div className="bg-white p-5 rounded-2xl shadow-sm border border-zinc-100">
+        <h3 className="font-bold text-lg text-zinc-700 mb-4 flex items-center gap-2">
           <Icons.Fee size={20} className="text-rose-400"/> 거래소 및 수수료 관리
         </h3>
-        <p className="text-xs text-gray-500 mb-6 leading-relaxed">
+        <p className="text-xs text-zinc-500 mb-6 leading-relaxed">
           자주 사용하는 거래소와 수수료율(%)을 등록해두세요.<br/>매매 기록 시 자동 적용됩니다.
         </p>
         
         <div className="space-y-4">
           {localExchanges.map((ex: any) => (
-            <div key={ex.id} className="bg-gray-50 p-4 rounded-xl border border-gray-100 relative">
+            <div key={ex.id} className="bg-zinc-50 p-4 rounded-xl border border-zinc-100 relative">
               <button 
                 onClick={() => handleDelete(ex.id)} 
-                className="absolute top-2 right-2 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                className="absolute top-2 right-2 p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
               >
                 <Icons.Delete size={16} />
               </button>
 
               <div className="flex flex-col md:flex-row gap-4 md:items-end">
                 <div className="flex-1">
-                  <label className="text-[10px] text-gray-400 font-bold mb-1 block ml-1">거래소명</label>
+                  <label className="text-[10px] text-zinc-400 font-bold mb-1 block ml-1">거래소명</label>
                   <input 
                     type="text" 
                     value={ex.name} 
                     onChange={(e) => handleUpdate(ex.id, 'name', e.target.value)}
                     onBlur={handleBlur}
-                    className="w-full bg-white border-b-2 border-gray-200 focus:border-rose-400 px-3 py-2 outline-none text-sm font-bold text-gray-700 rounded-t-lg transition-colors"
+                    className="w-full bg-white border-b-2 border-zinc-200 focus:border-rose-400 px-3 py-2 outline-none text-sm font-bold text-zinc-700 rounded-t-lg transition-colors"
                   />
                 </div>
 
                 <div className="flex gap-3 w-full md:w-auto">
                   <div className="flex-1">
-                    <span className="text-[10px] text-gray-400 font-bold mb-1 block ml-1">Maker(%)</span>
+                    <span className="text-[10px] text-zinc-400 font-bold mb-1 block ml-1">Maker(%)</span>
                     <input 
                       type="number" 
                       step="0.01"
                       value={ex.makerFee} 
                       onChange={(e) => handleUpdate(ex.id, 'makerFee', e.target.value)}
                       onBlur={handleBlur}
-                      className="w-full bg-white rounded-lg border border-gray-200 px-3 py-2 text-sm text-center outline-none focus:border-rose-300 font-mono"
+                      className="w-full bg-white rounded-lg border border-zinc-200 px-3 py-2 text-sm text-center outline-none focus:border-rose-300 font-mono"
                     />
                   </div>
                   <div className="flex-1">
-                    <span className="text-[10px] text-gray-400 font-bold mb-1 block ml-1">Taker(%)</span>
+                    <span className="text-[10px] text-zinc-400 font-bold mb-1 block ml-1">Taker(%)</span>
                     <input 
                       type="number" 
                       step="0.01"
                       value={ex.takerFee} 
                       onChange={(e) => handleUpdate(ex.id, 'takerFee', e.target.value)}
                       onBlur={handleBlur}
-                      className="w-full bg-white rounded-lg border border-gray-200 px-3 py-2 text-sm text-center outline-none focus:border-rose-300 font-mono"
+                      className="w-full bg-white rounded-lg border border-zinc-200 px-3 py-2 text-sm text-center outline-none focus:border-rose-300 font-mono"
                     />
                   </div>
                 </div>
@@ -745,7 +745,7 @@ function SettingsView({ exchanges, onSave, Icons, userQuote, onSaveQuote }: any)
           ))}
         </div>
 
-        <div className="mt-6 pt-6 border-t border-dashed border-gray-200">
+        <div className="mt-6 pt-6 border-t border-dashed border-zinc-200">
           <p className="text-xs font-bold text-rose-400 mb-3 ml-1">새로운 거래소 추가</p>
           <div className="flex flex-col md:flex-row gap-3 items-end">
              <div className="w-full md:flex-1">
@@ -753,7 +753,7 @@ function SettingsView({ exchanges, onSave, Icons, userQuote, onSaveQuote }: any)
                  placeholder="예: Bitget"
                  value={newEx.name}
                  onChange={(e) => setNewEx({...newEx, name: e.target.value})}
-                 className="w-full bg-gray-50 rounded-xl px-4 py-3 text-sm outline-none border border-transparent focus:bg-white focus:border-rose-300 transition-colors"
+                 className="w-full bg-zinc-50 rounded-xl px-4 py-3 text-sm outline-none border border-transparent focus:bg-white focus:border-rose-300 transition-colors"
                />
              </div>
              <div className="flex gap-2 w-full md:w-auto">
@@ -763,7 +763,7 @@ function SettingsView({ exchanges, onSave, Icons, userQuote, onSaveQuote }: any)
                    placeholder="Mk"
                    value={newEx.makerFee}
                    onChange={(e) => setNewEx({...newEx, makerFee: e.target.value})}
-                   className="w-full bg-gray-50 rounded-xl px-3 py-3 text-sm outline-none border border-transparent focus:bg-white focus:border-rose-300 transition-colors text-center"
+                   className="w-full bg-zinc-50 rounded-xl px-3 py-3 text-sm outline-none border border-transparent focus:bg-white focus:border-rose-300 transition-colors text-center"
                  />
                </div>
                <div className="flex-1 md:w-20">
@@ -772,7 +772,7 @@ function SettingsView({ exchanges, onSave, Icons, userQuote, onSaveQuote }: any)
                    placeholder="Tk"
                    value={newEx.takerFee}
                    onChange={(e) => setNewEx({...newEx, takerFee: e.target.value})}
-                   className="w-full bg-gray-50 rounded-xl px-3 py-3 text-sm outline-none border border-transparent focus:bg-white focus:border-rose-300 transition-colors text-center"
+                   className="w-full bg-zinc-50 rounded-xl px-3 py-3 text-sm outline-none border border-transparent focus:bg-white focus:border-rose-300 transition-colors text-center"
                  />
                </div>
                <button 
@@ -805,9 +805,9 @@ function StatsView({ records, Icons }: any) {
         <StatCard label="총 매매" value={`${total}회`} icon={<Icons.Dashboard size={18} />} color="bg-blue-50 text-blue-600" />
         <StatCard label="승률" value={`${winRate}%`} icon={<Icons.Up size={18} />} color="bg-rose-50 text-rose-600" />
         <StatCard label="순수익(Net)" value={`$${formatNumber(totalNetPnl)}`} icon={<Icons.Profit size={18} />} color={totalNetPnl >= 0 ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"} />
-        <StatCard label="총 수수료" value={`$${formatNumber(totalFees)}`} icon={<Icons.Fee size={18} />} color="bg-gray-100 text-gray-600" />
+        <StatCard label="총 수수료" value={`$${formatNumber(totalFees)}`} icon={<Icons.Fee size={18} />} color="bg-zinc-100 text-zinc-600" />
       </div>
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 text-center text-gray-400 text-sm">
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-zinc-100 text-center text-zinc-400 text-sm">
         상세 통계 준비 중...
       </div>
     </div>
@@ -820,9 +820,9 @@ function StrategiesView({ strategies }: any) {
       <h2 className="text-2xl font-bold text-zinc-700">나의 매매 전략 노트</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {strategies.map((s: any, idx: number) => (
-          <div key={idx} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-rose-300 transition-all">
+          <div key={idx} className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-100 hover:border-rose-300 transition-all">
             <h3 className="font-bold text-lg text-rose-500 mb-2">{s.title}</h3>
-            <p className="text-gray-600 text-sm leading-relaxed">{s.description}</p>
+            <p className="text-zinc-600 text-sm leading-relaxed">{s.description}</p>
           </div>
         ))}
       </div>
@@ -832,9 +832,9 @@ function StrategiesView({ strategies }: any) {
 
 function StatCard({ label, value, icon, color }: any) {
   return (
-    <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-2">
+    <div className="bg-white p-5 rounded-2xl shadow-sm border border-zinc-100 flex flex-col gap-2">
       <div className={`w-8 h-8 rounded-full flex items-center justify-center ${color} mb-1`}>{icon}</div>
-      <span className="text-gray-400 text-xs">{label}</span>
+      <span className="text-zinc-400 text-xs">{label}</span>
       <span className="text-xl font-bold text-zinc-700">{value}</span>
     </div>
   );
@@ -843,10 +843,10 @@ function StatCard({ label, value, icon, color }: any) {
 function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons }: any) {
   const isLong = record.position === 'Long';
   return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-lg transition-all relative group">
+    <div className="bg-white rounded-2xl p-5 shadow-sm border border-zinc-100 hover:shadow-lg transition-all relative group">
       <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-        <button onClick={() => onEdit(record)} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-400 hover:text-rose-500"><Icons.Edit size={14} /></button>
-        <button onClick={() => onDelete(record)} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-400 hover:text-red-500"><Icons.Delete size={14} /></button>
+        <button onClick={() => onEdit(record)} className="p-1.5 hover:bg-zinc-100 rounded-full text-zinc-400 hover:text-rose-500"><Icons.Edit size={14} /></button>
+        <button onClick={() => onDelete(record)} className="p-1.5 hover:bg-zinc-100 rounded-full text-zinc-400 hover:text-red-500"><Icons.Delete size={14} /></button>
       </div>
 
       <div className="flex items-center justify-between mb-4">
@@ -854,8 +854,8 @@ function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons 
           {record.position.toUpperCase()} x{record.leverage}
         </span>
         <div className="flex items-center gap-2">
-          {record.exchange && <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">{record.exchange}</span>}
-          <span className="text-xs text-gray-400">{record.openDate.split('T')[0]}</span>
+          {record.exchange && <span className="text-[10px] bg-zinc-100 text-zinc-500 px-1.5 py-0.5 rounded">{record.exchange}</span>}
+          <span className="text-xs text-zinc-400">{record.openDate.split('T')[0]}</span>
         </div>
       </div>
 
@@ -868,11 +868,11 @@ function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons 
 
       <div className="grid grid-cols-2 gap-2 text-sm">
         <div>
-          <div className="text-gray-400 text-xs">진입가</div>
+          <div className="text-zinc-400 text-xs">진입가</div>
           <div className="font-mono font-medium">{formatNumber(record.entryPrice)}</div>
         </div>
         <div>
-          <div className="text-gray-400 text-xs">Margin</div>
+          <div className="text-zinc-400 text-xs">Margin</div>
           <div className="font-mono font-medium">${formatNumber(record.margin)}</div>
         </div>
       </div>
@@ -883,12 +883,12 @@ function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons 
 function HistoryRow({ record, onEdit, onDelete, HighlightText, searchTerm, Icons }: any) {
   const isProfit = record.pnl > 0;
   return (
-    <div className="bg-white p-4 rounded-xl border border-gray-100 hover:border-rose-200 transition-all flex flex-col md:flex-row md:items-center gap-4 group">
+    <div className="bg-white p-4 rounded-xl border border-zinc-100 hover:border-rose-200 transition-all flex flex-col md:flex-row md:items-center gap-4 group">
       <div className="flex justify-between items-center md:hidden">
-        <span className="text-xs text-gray-400">{record.openDate.split('T')[0]}</span>
+        <span className="text-xs text-zinc-400">{record.openDate.split('T')[0]}</span>
         <div className="flex gap-2">
-           <button onClick={() => onEdit(record)} className="text-gray-400"><Icons.Edit size={14} /></button>
-           <button onClick={() => onDelete(record)} className="text-gray-400"><Icons.Delete size={14} /></button>
+           <button onClick={() => onEdit(record)} className="text-zinc-400"><Icons.Edit size={14} /></button>
+           <button onClick={() => onDelete(record)} className="text-zinc-400"><Icons.Delete size={14} /></button>
         </div>
       </div>
 
@@ -897,36 +897,36 @@ function HistoryRow({ record, onEdit, onDelete, HighlightText, searchTerm, Icons
           <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${record.position === 'Long' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
             {record.position.charAt(0)}
           </span>
-          <h4 className="font-bold text-gray-700 truncate w-24 md:w-auto">
+          <h4 className="font-bold text-zinc-700 truncate w-24 md:w-auto">
             <HighlightText text={record.symbol} highlight={searchTerm} />
           </h4>
-          <span className="text-xs text-gray-400">x{record.leverage}</span>
-          {record.exchange && <span className="text-[10px] text-gray-400 border border-gray-100 px-1 rounded ml-1 hidden md:inline">{record.exchange}</span>}
+          <span className="text-xs text-zinc-400">x{record.leverage}</span>
+          {record.exchange && <span className="text-[10px] text-zinc-400 border border-zinc-100 px-1 rounded ml-1 hidden md:inline">{record.exchange}</span>}
         </div>
-        <div className="text-xs text-gray-500 flex flex-wrap items-center gap-2">
+        <div className="text-xs text-zinc-500 flex flex-wrap items-center gap-2">
           <span>{record.strategy}</span>
-          {record.exitReason && <span className="bg-gray-100 px-1 rounded text-[10px] text-gray-400">{record.exitReason}</span>}
+          {record.exitReason && <span className="bg-zinc-100 px-1 rounded text-[10px] text-zinc-400">{record.exitReason}</span>}
           {record.exitMemo && <span className={`${APP_CONFIG.theme.accent} text-[10px] truncate max-w-[150px]`}>💬 {record.exitMemo}</span>}
         </div>
       </div>
 
       <div className="flex justify-between md:justify-end items-center gap-6 md:w-1/2">
         <div className="text-right">
-          <div className="text-[10px] text-gray-400">PNL %</div>
+          <div className="text-[10px] text-zinc-400">PNL %</div>
           <div className={`font-bold font-mono ${isProfit ? 'text-green-500' : 'text-red-500'}`}>
             {record.pnl > 0 ? '+' : ''}{record.pnl}%
           </div>
         </div>
         <div className="text-right w-20">
-          <div className="text-[10px] text-gray-400">순수익($)</div>
+          <div className="text-[10px] text-zinc-400">순수익($)</div>
           <div className={`font-bold font-mono text-sm ${isProfit ? 'text-green-500' : 'text-red-500'}`}>
             ${formatNumber(record.realizedPnlValue)}
           </div>
-          {record.fees > 0 && <div className="text-[9px] text-gray-300">수수료 -${record.fees}</div>}
+          {record.fees > 0 && <div className="text-[9px] text-zinc-300">수수료 -${record.fees}</div>}
         </div>
         <div className="hidden md:flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-           <button onClick={() => onEdit(record)} className="p-2 hover:bg-rose-50 rounded-full text-gray-400 hover:text-rose-500"><Icons.Edit size={16} /></button>
-           <button onClick={() => onDelete(record)} className="p-2 hover:bg-rose-50 rounded-full text-gray-400 hover:text-red-500"><Icons.Delete size={16} /></button>
+           <button onClick={() => onEdit(record)} className="p-2 hover:bg-rose-50 rounded-full text-zinc-400 hover:text-rose-500"><Icons.Edit size={16} /></button>
+           <button onClick={() => onDelete(record)} className="p-2 hover:bg-rose-50 rounded-full text-zinc-400 hover:text-red-500"><Icons.Delete size={16} /></button>
         </div>
       </div>
     </div>
@@ -936,13 +936,13 @@ function HistoryRow({ record, onEdit, onDelete, HighlightText, searchTerm, Icons
 // [NEW] 커스텀 토글 컴포넌트
 function ToggleSwitch({ options, value, onChange }: { options: string[], value: string, onChange: (val: string) => void }) {
   return (
-    <div className="bg-gray-100 p-1 rounded-full flex items-center relative h-8 w-32">
+    <div className="bg-zinc-100 p-1 rounded-full flex items-center relative h-8 w-32">
       {options.map((opt) => (
         <button
           key={opt}
           type="button"
           onClick={() => onChange(opt)}
-          className={`flex-1 text-xs font-bold z-10 transition-colors ${value === opt ? 'text-rose-500' : 'text-gray-400'}`}
+          className={`flex-1 text-xs font-bold z-10 transition-colors ${value === opt ? 'text-rose-500' : 'text-zinc-400'}`}
         >
           {opt}
         </button>
@@ -1020,34 +1020,34 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm animate-fade-in">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto custom-scrollbar">
-        <div className="sticky top-0 bg-white z-10 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+        <div className="sticky top-0 bg-white z-10 px-6 py-4 border-b border-zinc-200 flex justify-between items-center">
           <h3 className="font-bold text-xl text-zinc-700">{initialData ? '매매 기록 수정' : '새 매매 기록'}</h3>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full"><Icons.Close size={20} className="text-gray-400"/></button>
+          <button onClick={onClose} className="p-2 hover:bg-zinc-100 rounded-full"><Icons.Close size={20} className="text-zinc-400"/></button>
         </div>
         
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Exchange & Symbol */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-gray-500 mb-1">거래소</label>
+              <label className="block text-xs font-bold text-zinc-500 mb-1">거래소</label>
               <select 
                 name="exchange" 
                 value={formData.exchange} 
                 onChange={handleChange} 
-                className="w-full p-2.5 bg-gray-50 rounded-xl border border-transparent focus:bg-white focus:border-rose-300 focus:outline-none text-sm"
+                className="w-full p-2.5 bg-zinc-50 rounded-xl border border-transparent focus:bg-white focus:border-rose-300 focus:outline-none text-sm"
               >
                 {exchanges.map((ex: any) => <option key={ex.id} value={ex.name}>{ex.name}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-500 mb-1">종목명</label>
+              <label className="block text-xs font-bold text-zinc-500 mb-1">종목명</label>
               <input 
                 list="symbol-list"
                 name="symbol"
                 value={formData.symbol}
                 onChange={(e) => setFormData({...formData, symbol: e.target.value.toUpperCase()})}
                 placeholder="BTC"
-                className="w-full p-2.5 bg-gray-50 rounded-xl border border-transparent focus:bg-white focus:border-rose-300 focus:outline-none text-sm font-bold uppercase"
+                className="w-full p-2.5 bg-zinc-50 rounded-xl border border-transparent focus:bg-white focus:border-rose-300 focus:outline-none text-sm font-bold uppercase"
                 required
               />
               <datalist id="symbol-list">
@@ -1059,10 +1059,10 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
           {/* Position & Margin */}
           <div className="flex gap-4">
              <div className="w-1/2">
-                <label className="block text-xs font-bold text-gray-500 mb-1">포지션</label>
+                <label className="block text-xs font-bold text-zinc-500 mb-1">포지션</label>
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => setFormData({...formData, position: 'Long'})} className={`flex-1 py-2 rounded-xl text-sm font-bold transition-colors ${formData.position === 'Long' ? 'bg-green-100 text-green-600 ring-2 ring-green-200' : 'bg-gray-50 text-gray-400'}`}>Long</button>
-                  <button type="button" onClick={() => setFormData({...formData, position: 'Short'})} className={`flex-1 py-2 rounded-xl text-sm font-bold transition-colors ${formData.position === 'Short' ? 'bg-red-100 text-red-600 ring-2 ring-red-200' : 'bg-gray-50 text-gray-400'}`}>Short</button>
+                  <button type="button" onClick={() => setFormData({...formData, position: 'Long'})} className={`flex-1 py-2 rounded-xl text-sm font-bold transition-colors ${formData.position === 'Long' ? 'bg-green-100 text-green-600 ring-2 ring-green-200' : 'bg-zinc-50 text-zinc-400'}`}>Long</button>
+                  <button type="button" onClick={() => setFormData({...formData, position: 'Short'})} className={`flex-1 py-2 rounded-xl text-sm font-bold transition-colors ${formData.position === 'Short' ? 'bg-red-100 text-red-600 ring-2 ring-red-200' : 'bg-zinc-50 text-zinc-400'}`}>Short</button>
                 </div>
              </div>
              <div className="w-1/2">
@@ -1071,7 +1071,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
           </div>
 
           {/* Entry Info */}
-          <div className="bg-gray-50 p-4 rounded-2xl space-y-3">
+          <div className="bg-zinc-50 p-4 rounded-2xl space-y-3">
              <div className="flex justify-between items-center mb-1">
                 <span className="text-xs font-bold text-blue-400">진입 정보</span>
                 {/* [NEW] 커스텀 토글 적용 */}
@@ -1087,7 +1087,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
              </div>
              <FormInput label="오픈 시간" name="openDate" type="datetime-local" value={formData.openDate} onChange={handleChange} />
              <div>
-               <label className="block text-xs font-bold text-gray-500 mb-1">전략 & 근거</label>
+               <label className="block text-xs font-bold text-zinc-500 mb-1">전략 & 근거</label>
                <div className="flex gap-2 mb-2">
                  <select name="strategy" value={formData.strategy} onChange={handleChange} className="w-1/2 p-2 bg-white rounded-xl border border-blue-100 text-xs outline-none">
                    <option value="">전략 선택</option>
@@ -1106,10 +1106,10 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
           </div>
 
           {/* Exit Info */}
-          <div className="border-t border-dashed border-gray-200 my-2"></div>
+          <div className="border-t border-dashed border-zinc-200 my-2"></div>
           <div className="space-y-4">
              <div className="flex justify-between items-center">
-               <span className="text-sm font-bold text-gray-700">청산 정보 (선택)</span>
+               <span className="text-sm font-bold text-zinc-700">청산 정보 (선택)</span>
                <label className="flex items-center gap-2 cursor-pointer select-none">
                  <input 
                    type="checkbox" 
@@ -1117,12 +1117,12 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                    onChange={handleStatusChange} 
                    className="w-5 h-5 rounded text-rose-500 focus:ring-rose-400 accent-rose-500 cursor-pointer"
                  />
-                 <span className={`text-xs ${formData.status === 'Closed' ? 'text-rose-500 font-bold' : 'text-gray-500'}`}>포지션 종료됨</span>
+                 <span className={`text-xs ${formData.status === 'Closed' ? 'text-rose-500 font-bold' : 'text-zinc-500'}`}>포지션 종료됨</span>
                </label>
              </div>
              
              {formData.status === 'Closed' && (
-               <div className="animate-fade-in space-y-3 p-4 bg-gray-50 rounded-2xl">
+               <div className="animate-fade-in space-y-3 p-4 bg-zinc-50 rounded-2xl">
                  <div className="flex justify-between items-center mb-1">
                     <span className="text-xs font-bold text-rose-400">청산 세부</span>
                     {/* [NEW] 커스텀 토글 적용 */}
@@ -1138,14 +1138,14 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                  </div>
                  
                  <div>
-                   <label className="block text-xs font-bold text-gray-500 mb-1">청산 기준</label>
+                   <label className="block text-xs font-bold text-zinc-500 mb-1">청산 기준</label>
                    <div className="flex gap-2 flex-wrap">
                      {['TP Hit', 'SL Hit', 'Trailing', 'Market'].map(reason => (
                        <button 
                          key={reason}
                          type="button" 
                          onClick={() => setFormData({...formData, exitReason: reason})}
-                         className={`px-3 py-1.5 rounded-lg text-xs transition-colors border ${formData.exitReason === reason ? 'bg-rose-400 text-white border-rose-400' : 'bg-white text-gray-500 border-gray-200 hover:border-rose-300'}`}
+                         className={`px-3 py-1.5 rounded-lg text-xs transition-colors border ${formData.exitReason === reason ? 'bg-rose-400 text-white border-rose-400' : 'bg-white text-zinc-500 border-zinc-200 hover:border-rose-300'}`}
                        >
                          {reason}
                        </button>
@@ -1177,9 +1177,9 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
 function FormInput({ label, ...props }: any) {
   return (
     <div>
-      <label className="block text-xs font-bold text-gray-500 mb-1">{label}</label>
+      <label className="block text-xs font-bold text-zinc-500 mb-1">{label}</label>
       <input 
-        className="w-full p-2.5 bg-gray-50 rounded-xl border border-transparent focus:bg-white focus:border-rose-300 focus:outline-none text-sm transition-all"
+        className="w-full p-2.5 bg-zinc-50 rounded-xl border border-transparent focus:bg-white focus:border-rose-300 focus:outline-none text-sm transition-all"
         {...props}
       />
     </div>
@@ -1194,11 +1194,11 @@ function DeleteConfirmModal({ target, onClose, onConfirm, Icons }: any) {
           <Icons.Delete size={24} />
         </div>
         <h3 className="font-bold text-lg text-zinc-700 mb-2">기록을 삭제할까요?</h3>
-        <p className="text-gray-500 text-sm mb-6">
-          <span className="font-bold text-gray-700">{target.symbol}</span> 매매 기록이 영구적으로 삭제됩니다.
+        <p className="text-zinc-500 text-sm mb-6">
+          <span className="font-bold text-zinc-700">{target.symbol}</span> 매매 기록이 영구적으로 삭제됩니다.
         </p>
         <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-medium hover:bg-gray-50 transition-colors">취소</button>
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-zinc-200 text-zinc-600 font-medium hover:bg-zinc-50 transition-colors">취소</button>
           <button onClick={onConfirm} className="flex-1 py-2.5 rounded-xl bg-red-500 text-white font-bold shadow-lg shadow-red-200 hover:bg-red-600 transition-colors">삭제하기</button>
         </div>
       </div>
@@ -1210,7 +1210,7 @@ function SidebarItem({ icon, label, active, onClick }: any) {
   return (
     <button 
       onClick={onClick}
-      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${active ? `${APP_CONFIG.theme.secondaryBg} ${APP_CONFIG.theme.accent} font-bold` : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'}`}
+      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${active ? `${APP_CONFIG.theme.secondaryBg} ${APP_CONFIG.theme.accent} font-bold` : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700'}`}
     >
       {icon}
       <span className="text-sm">{label}</span>
@@ -1221,7 +1221,7 @@ function SidebarItem({ icon, label, active, onClick }: any) {
 
 function NavButton({ icon, label, active, onClick }: any) {
   return (
-    <button onClick={onClick} className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${active ? APP_CONFIG.theme.accent : 'text-gray-400'}`}>
+    <button onClick={onClick} className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${active ? APP_CONFIG.theme.accent : 'text-zinc-400'}`}>
       {icon}
       <span className="text-[10px] font-medium">{label}</span>
     </button>
