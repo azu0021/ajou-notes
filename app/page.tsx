@@ -375,21 +375,16 @@ export default function VeryDailyLog() {
         <NavButton icon={<Icons.Settings size={20}/>} label="설정" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
       </div>
 
-      {/* 로고 영역 교체 시작 */}
         <div className="mb-10 pl-1">
           <div className="flex flex-col text-zinc-500 leading-none">
             {/* 1. Very: 얇은 폰트(font-light) + 큰 사이즈(text-4xl) */}
             <span className="text-4xl font-light tracking-tight mb-1">Very</span>
-            
-            {/* 2. Daily Log: 굵은 폰트(font-bold) + 옆에 원형 포인트 */}
             <div className="flex items-start gap-1">
               <span className="text-4xl font-bold tracking-tight">Daily Log</span>
-              {/* Tabler 아이콘 대신 CSS로 만든 핑크색 원 (커스텀 용이) */}
               <div className="w-2.5 h-2.5 bg-rose-300 rounded-full mt-2"></div>
             </div>
           </div>
         </div>
-        {/* 로고 영역 교체 끝 */}
         
         <nav className="flex-1 space-y-2">
           <SidebarItem icon={<Icons.Dashboard size={18}/>} label="대시보드" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
