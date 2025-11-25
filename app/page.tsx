@@ -58,10 +58,10 @@ import {
 const APP_CONFIG = {
   theme: {
     // [Primary Color] 포인트 색상 -> 연한 핑크 (bg-pink-400)
-    primary: 'bg-pink-400',
+    primary: 'bg-rose-300',
     
     // [Primary Hover] 호버 색상
-    primaryHover: 'hover:bg-pink-500',
+    primaryHover: 'hover:bg-rose-400',
     
     // [Secondary Background] 앱 전체 배경색 -> 차분한 그레이 (bg-zinc-50)
     secondaryBg: 'bg-zinc-50', 
@@ -79,7 +79,7 @@ const APP_CONFIG = {
     textSub: 'text-zinc-500',
     
     // [Accent Text] 강조 텍스트 (연한 핑크)
-    accent: 'text-pink-400',
+    accent: 'text-rose-400',
     
     // [Highlight] 형광펜 효과
     highlight: 'bg-yellow-200',
@@ -507,7 +507,7 @@ function DashboardView({
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <div className="flex flex-col">
-            <h1 className="text-3xl font-bold text-zinc-600 mb-2">오늘의 싸움</h1>
+            <h1 className="text-5xl font-bold text-zinc-600 mb-2">😎</h1>
             <p className={`${APP_CONFIG.theme.accent} text-sm font-medium`}>{userQuote}</p>
           </div>
         </div>
@@ -660,7 +660,7 @@ function SettingsView({ exchanges, onSave, Icons, userQuote, onSaveQuote }: any)
 
   return (
     <div className="space-y-6 animate-fade-in-up max-w-2xl mx-auto pb-20">
-      <h2 className="text-2xl font-bold text-zinc-700 mb-6">환경 설정 ⚙️</h2>
+      <h2 className="text-2xl font-bold text-zinc-700 mb-6">환경 설정</h2>
       
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-zinc-100">
         <h3 className="font-bold text-lg text-zinc-700 mb-4 flex items-center gap-2">
