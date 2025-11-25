@@ -581,7 +581,8 @@ function DashboardView({
       {/* Closed Records */}
       <section>
         <details className="group" open={true}>
-          <summary className="list-none cursor-pointer mb-3 select-none">
+          {/* [수정] 아래 summary 태그에 [&::-webkit-details-marker]:hidden 추가 (모바일 강제 화살표 제거) */}
+          <summary className="list-none cursor-pointer mb-3 select-none [&::-webkit-details-marker]:hidden">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-zinc-300 group-open:bg-rose-400 rounded-full transition-colors"></div>
@@ -903,12 +904,14 @@ function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons 
   const isLong = record.position === 'Long';
   return (
     <div className="bg-white rounded-2xl p-5 shadow-sm border border-zinc-100 hover:shadow-lg transition-all relative group">
+      {/* 수정/삭제 버튼: 모바일에서도 터치 시 잘 눌리도록 z-index 확인 */}
       <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-        <button onClick={() => onEdit(record)} className="p-1.5 hover:bg-zinc-100 rounded-full text-zinc-400 hover:text-rose-400"><Icons.Edit size={14} /></button>
-        <button onClick={() => onDelete(record)} className="p-1.5 hover:bg-zinc-100 rounded-full text-zinc-400 hover:text-red-500"><Icons.Delete size={14} /></button>
+        <button onClick={() => onEdit(record)} className="p-1.5 bg-white shadow-sm border border-zinc-100 rounded-full text-zinc-400 hover:text-rose-500"><Icons.Edit size={14} /></button>
+        <button onClick={() => onDelete(record)} className="p-1.5 bg-white shadow-sm border border-zinc-100 rounded-full text-zinc-400 hover:text-red-500"><Icons.Delete size={14} /></button>
       </div>
 
-      <div className="flex items-center justify-between mb-4">
+      {/* [수정] pr-16을 추가해서 오른쪽 버튼 자리 확보 (글자 겹침 방지) */}
+      <div className="flex items-center justify-between mb-4 pr-16">
         <span className={`text-xs font-bold px-2 py-1 rounded-md ${isLong ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
           {record.position.toUpperCase()} x{record.leverage}
         </span>
