@@ -49,34 +49,54 @@ import {
  * ------------------------------------------------------------------
  */
 const APP_CONFIG = {
-  theme: {
+theme: {
+    // [Primary Color] 메인 버튼, 헤더 포인트, 강조 색상 (현재: 로즈 핑크)
     primary: 'bg-rose-400',
+    
+    // [Primary Hover] 버튼 위에 마우스를 올렸을 때 색상 (조금 더 진한 핑크)
     primaryHover: 'hover:bg-rose-500',
+    
+    // [Secondary Background] 앱 전체 배경색 (아주 연한 핑크)
     secondaryBg: 'bg-rose-50',
+    
+    // [Card Background] 카드, 모달, 사이드바 등의 배경색 (흰색)
     cardBg: 'bg-white',
+    
+    // [Text Main] 기본 글자 색상 (진한 회색)
     textMain: 'text-gray-700',
+    
+    // [Text Sub] 보조 글자 색상 (연한 회색 - 설명, 날짜 등)
     textSub: 'text-gray-500',
+    
+    // [Accent Text] 강조하고 싶은 텍스트 색상 (로즈 핑크)
     accent: 'text-rose-500',
+    
+    // [Highlight] 검색 결과 등 강조 표시 배경색 (노란 형광펜)
     highlight: 'bg-yellow-200',
   },
-  // 2. 여기서 아이콘을 교체합니다.
+ // 2. 아이콘 매핑 (여기서 아이콘을 교체하면 앱 전체에 반영됩니다)
   icons: {
-    Dashboard: LayoutDashboard,
-    Stats: PieChart,
-    Strategies: BookOpen,
-    Settings: Settings,
-    Add: Plus,
-    Search: Search,
-    Export: Download,
-    Delete: Trash2,
-    Edit: Edit2,
-    Close: X,
-    Down: ChevronDown,
-    Up: TrendingUp,
-    DownTrend: TrendingDown,
-    Fee: Building2,
-    Profit: Coins,     // <-- 수익금 아이콘 (Coins)
-    Exchange: ArrowRightLeft, // <-- 거래소 아이콘
+    // -- 사이드바 및 네비게이션 --
+    Dashboard: star, // 대시보드 탭 아이콘 (메인 화면)
+    Stats: PieChart,            // 통계 분석 탭 아이콘
+    Strategies: sparkle,       // 매매 전략 탭 아이콘
+    Settings: pin,         // 환경 설정 탭 아이콘
+
+    // -- 기능 버튼 --
+    Add: Plus,                  // '기록하기' 버튼의 플러스(+) 아이콘
+    Search: Search,             // 검색창 돋보기 아이콘
+    Export: Download,           // '엑셀 다운로드' 버튼 아이콘
+    Delete: Trash2,             // 삭제(휴지통) 버튼 아이콘
+    Edit: Edit2,                // 수정(연필) 버튼 아이콘
+    Close: X,                   // 모달 닫기(X) 버튼 아이콘
+
+    // -- UI 요소 --
+    Down: ChevronDown,          // 아코디언 펼치기/접기 화살표
+    Up: TrendingUp,             // 통계: 승률 등 상승 지표
+    DownTrend: TrendingDown,    // 통계: 하락 지표 (현재 사용 안 함, 예비용)
+    Fee: Building2,             // 설정: 거래소 수수료 아이콘 (건물 모양)
+    Profit: Coins,              // 통계: 수익금 아이콘 (동전 모양)
+    Exchange: ArrowRightLeft,   // 카드: 거래소 표시 아이콘 (화살표)
   }
 };
 
@@ -439,8 +459,10 @@ function DashboardView({
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">오늘의 매매 💖</h2>
-          <p className={`${APP_CONFIG.theme.accent} text-sm`}>기록이 쌓여 실력이 됩니다.</p>
+          <h1 className="text-2xl font-bold text-zine-600">오늘의</h1>
+                      <div className="flex items-start gap-1">
+             <h1 className="text-2xl font-bold text-zine-600">싸움</h1>           
+          <p className={`${APP_CONFIG.theme.accent} text-m`}>신중할수록 이긴다.</p>
         </div>
         <div className="flex items-center gap-3 w-full md:w-auto">
           <div className="relative flex-1 md:w-64">
