@@ -1,5 +1,10 @@
 'use client';
 
+/**
+ * ☝️ [중요] Next.js App Router에서 useState, useEffect 등을 쓰려면
+ * 반드시 파일 최상단에 'use client'; 가 있어야 해!
+ */
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAnalytics } from 'firebase/analytics';
@@ -34,15 +39,15 @@ import {
   Trash2,
   Edit2,
   X,
-  Pin,
-  Star,
+  Pin, // 대문자 Pin
+  Star, // 대문자 Star
   ChevronDown,
   TrendingUp,
   TrendingDown,
   Building2,
   Coins,
   ArrowRightLeft,
-  // 여기에 새로 찾은 아이콘 이름을 추가하면 됩니다. (예: Wallet, Star 등)
+  MessageSquareQuote,
 } from 'lucide-react';
 
 /**
@@ -51,49 +56,37 @@ import {
  * ------------------------------------------------------------------
  */
 const APP_CONFIG = {
-theme: {
-    // [Primary Color] 메인 버튼, 헤더 포인트, 강조 색상 (현재: 로즈 핑크)
-    primary: 'bg-pink-100',
-    
-    // [Primary Hover] 버튼 위에 마우스를 올렸을 때 색상 (조금 더 진한 핑크)
-    primaryHover: 'hover:bg-pink-150',
-    
-    // [Secondary Background] 앱 전체 배경색 (아주 연한 핑크)
-    secondaryBg: 'bg-pink-50',
-    
-    // [Card Background] 카드, 모달, 사이드바 등의 배경색 (흰색)
+  theme: {
+    primary: 'bg-rose-400',
+    primaryHover: 'hover:bg-rose-500',
+    secondaryBg: 'bg-pink-100',
     cardBg: 'bg-white',
-    
-    // [Text Main] 기본 글자 색상 (진한 회색)
-    textMain: 'text-stone-700',
-    
-    // [Text Sub] 보조 글자 색상 (연한 회색 - 설명, 날짜 등)
-    textSub: 'text-stone-500',
-    
-    // [Accent Text] 강조하고 싶은 텍스트 색상 (로즈 핑크)
-    accent: 'text-pink-100',
-    
-    // [Highlight] 검색 결과 등 강조 표시 배경색 (노란 형광펜)
+    textMain: 'text-zinc-700',
+    textSub: 'text-gray-500',
+    accent: 'text-rose-500',
     highlight: 'bg-yellow-200',
+    sidebarBg: 'bg-pink-50', // 사이드바 배경색
   },
-  // 2. 여기서 아이콘을 교체합니다.
   icons: {
     Dashboard: Star,
     Stats: PieChart,
     Strategies: BookOpen,
     Settings: Pin,
+    
     Add: Plus,
     Search: Search,
     Export: Download,
     Delete: Trash2,
     Edit: Edit2,
     Close: X,
+    Quote: MessageSquareQuote,
+
     Down: ChevronDown,
     Up: TrendingUp,
     DownTrend: TrendingDown,
     Fee: Building2,
-    Profit: Coins,     // <-- 수익금 아이콘 (Coins)
-    Exchange: ArrowRightLeft, // <-- 거래소 아이콘
+    Profit: Coins,
+    Exchange: ArrowRightLeft,
   }
 };
 
@@ -109,6 +102,11 @@ const DEFAULT_EXCHANGES = [
   { id: 'upbit', name: 'Upbit', makerFee: 0.05, takerFee: 0.05 },
 ];
 
+/**
+ * ------------------------------------------------------------------
+ * [Firebase Init]
+ * ------------------------------------------------------------------
+ */
 const firebaseConfig = {
   apiKey: "AIzaSyApCBDZtKlXoeclGosSDwYGrZxmLlvRHc4",
   authDomain: "berry-log.firebaseapp.com",
@@ -133,6 +131,7 @@ if (typeof window !== 'undefined') {
 
 const appId = 'very-daily-log';
 
+// 유틸리티 함수들
 const formatNumber = (num: any) => {
   if (num === '' || num === null || num === undefined) return '';
   return Number(num).toLocaleString(undefined, { maximumFractionDigits: 2 });
@@ -143,11 +142,17 @@ const getCurrentDateTimeString = () => {
   return new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
 };
 
+/**
+ * ------------------------------------------------------------------
+ * [메인 앱 컴포넌트]
+ * ------------------------------------------------------------------
+ */
 export default function VeryDailyLog() {
   const [user, setUser] = useState<any>(null);
   const [records, setRecords] = useState<any[]>([]);
   const [strategies, setStrategies] = useState(DEFAULT_STRATEGIES);
   const [exchanges, setExchanges] = useState(DEFAULT_EXCHANGES);
+  const [userQuote, setUserQuote] = useState("기록이 쌓여 실력이 됩니다.");
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
 
@@ -160,6 +165,7 @@ export default function VeryDailyLog() {
 
   const Icons = APP_CONFIG.icons;
 
+  // Auth Init
   useEffect(() => {
     const initAuth = async () => {
       try {
@@ -176,6 +182,7 @@ export default function VeryDailyLog() {
     return () => unsubscribe();
   }, []);
 
+  // Data Fetching
   useEffect(() => {
     if (!user) return;
     setLoading(true);
@@ -194,6 +201,7 @@ export default function VeryDailyLog() {
     return () => unsubscribe();
   }, [user]);
 
+  // Settings Fetching
   useEffect(() => {
     if (!user) return;
     const fetchSettings = async () => {
@@ -203,6 +211,7 @@ export default function VeryDailyLog() {
         if (docSnap.exists()) {
           const data = docSnap.data();
           if (data.exchanges) setExchanges(data.exchanges);
+          if (data.quote) setUserQuote(data.quote);
         }
       } catch (e) {
         console.error("Settings Error:", e);
@@ -223,11 +232,24 @@ export default function VeryDailyLog() {
     }
   };
 
+  const handleSaveQuote = async (newQuote: string) => {
+    if (!user) return;
+    try {
+      await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'settings', 'config'), {
+        quote: newQuote
+      }, { merge: true });
+      setUserQuote(newQuote);
+    } catch (e) {
+      console.error("Save Quote Error:", e);
+    }
+  };
+
   const uniqueSymbols = useMemo(() => {
     const symbols = new Set(records.map(r => r.symbol?.toUpperCase()).filter(Boolean));
     return Array.from(symbols).sort();
   }, [records]);
 
+  // --- CRUD Functions ---
   const handleSave = async (formData: any) => {
     if (!user) return;
     let finalData = { ...formData };
@@ -364,18 +386,14 @@ export default function VeryDailyLog() {
       </div>
 
       {/* Desktop Sidebar */}
-      <div className="hidden md:flex fixed left-0 top-0 bottom-0 w-64 bg-white border-r border-rose-100 flex-col p-6 shadow-sm z-40">
+      <div className={`hidden md:flex fixed left-0 top-0 bottom-0 w-64 ${APP_CONFIG.theme.sidebarBg} border-r border-rose-100 flex-col p-6 shadow-sm z-40`}>
         
-        {/* 로고 영역 (요청하신 디자인) */}
+        {/* 로고 영역 */}
         <div className="mb-10 pl-1">
           <div className="flex flex-col text-gray-700 leading-none">
-            {/* 1. Very: 얇은 폰트(font-light) + 큰 사이즈(text-4xl) */}
             <span className="text-4xl font-light tracking-tight mb-1">Very</span>
-            
-            {/* 2. Daily Log: 굵은 폰트(font-bold) + 옆에 원형 포인트 */}
             <div className="flex items-start gap-1">
               <span className="text-4xl font-bold tracking-tight">Daily Log</span>
-              {/* 핑크색 원형 포인트 */}
               <div className="w-2.5 h-2.5 bg-rose-300 rounded-full mt-2"></div>
             </div>
           </div>
@@ -389,7 +407,7 @@ export default function VeryDailyLog() {
         </nav>
         
         <div className="pt-6 border-t border-rose-100">
-           <button onClick={handleExportCSV} className="flex items-center gap-2 text-sm text-gray-500 hover:text-rose-500 transition-colors w-full p-2 rounded-lg hover:bg-rose-50">
+           <button onClick={handleExportCSV} className="flex items-center gap-2 text-sm text-gray-500 hover:text-rose-500 transition-colors w-full p-2 rounded-lg hover:bg-rose-100">
              <Icons.Export size={16} /> 엑셀 다운로드
            </button>
         </div>
@@ -411,11 +429,20 @@ export default function VeryDailyLog() {
             uniqueSymbols={uniqueSymbols}
             HighlightText={HighlightText}
             Icons={Icons}
+            userQuote={userQuote} // 문구 전달
           />
         )}
         {activeTab === 'stats' && <StatsView records={records} Icons={Icons} />}
         {activeTab === 'strategies' && <StrategiesView strategies={strategies} />}
-        {activeTab === 'settings' && <SettingsView exchanges={exchanges} onSave={saveSettings} Icons={Icons} />}
+        {activeTab === 'settings' && (
+          <SettingsView 
+            exchanges={exchanges} 
+            onSave={saveSettings} 
+            Icons={Icons} 
+            userQuote={userQuote}
+            onSaveQuote={handleSaveQuote}
+          />
+        )}
       </main>
 
       {/* Modals */}
@@ -444,21 +471,24 @@ export default function VeryDailyLog() {
   );
 }
 
-// ... 나머지 하위 컴포넌트들 (DashboardView, TradeFormModal 등은 기존 코드와 동일)
-// (너무 길어질까봐 메인 컴포넌트 위주로 넣었습니다. 하위 컴포넌트가 잘린다면 말씀해주세요!)
+// --- Sub Components ---
 
 function DashboardView({ 
   openPositions, closedRecords, onAdd, onEdit, onDelete, 
-  searchTerm, setSearchTerm, selectedSymbol, setSelectedSymbol, uniqueSymbols, HighlightText, Icons
+  searchTerm, setSearchTerm, selectedSymbol, setSelectedSymbol, uniqueSymbols, HighlightText, Icons, userQuote
 }: any) {
   return (
     <div className="space-y-6 animate-fade-in-up">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">오늘의 매매 💖</h2>
-          <p className={`${APP_CONFIG.theme.accent} text-sm`}>기록이 쌓여 실력이 됩니다.</p>
+          <div className="flex flex-col">
+            <h1 className="text-2xl font-bold text-zinc-600 mb-1">😎</h1>
+            <p className={`${APP_CONFIG.theme.accent} text-sm font-medium`}>{userQuote}</p>
+          </div>
         </div>
+        
+        {/* 검색창 영역 */}
         <div className="flex items-center gap-3 w-full md:w-auto">
           <div className="relative flex-1 md:w-64">
             <Icons.Search className="absolute left-3 top-1/2 -translate-y-1/2 text-rose-300" size={16} />
@@ -470,12 +500,6 @@ function DashboardView({
               className="w-full pl-9 pr-4 py-2 bg-white border border-rose-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 transition-shadow placeholder-rose-200"
             />
           </div>
-          <button 
-            onClick={onAdd}
-            className={`${APP_CONFIG.theme.primary} ${APP_CONFIG.theme.primaryHover} text-white px-4 py-2 rounded-xl shadow-md flex items-center gap-2 text-sm font-semibold transition-transform active:scale-95 whitespace-nowrap`}
-          >
-            <Icons.Add size={16} /> 기록하기
-          </button>
         </div>
       </div>
 
@@ -500,9 +524,19 @@ function DashboardView({
 
       {/* Open Positions */}
       <section>
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-2 h-6 bg-rose-400 rounded-full"></div>
-          <h3 className="font-bold text-lg text-gray-700">진행 중인 포지션 ({openPositions.length})</h3>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-1 h-5 bg-rose-400 rounded-full"></div>
+            <h3 className="font-bold text-lg text-gray-700">진행 중인 포지션 ({openPositions.length})</h3>
+          </div>
+          
+          {/* 기록하기 버튼 */}
+          <button 
+            onClick={onAdd}
+            className={`${APP_CONFIG.theme.primary} ${APP_CONFIG.theme.primaryHover} text-white px-3 py-1.5 rounded-xl shadow-md flex items-center gap-1 text-xs font-bold transition-transform active:scale-95 whitespace-nowrap`}
+          >
+            <Icons.Add size={14} /> 기록하기
+          </button>
         </div>
         
         {openPositions.length === 0 ? (
@@ -531,8 +565,8 @@ function DashboardView({
         <details className="group" open={true}>
           <summary className="list-none cursor-pointer mb-3">
             <div className="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-rose-100 hover:border-rose-300 transition-colors">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-6 bg-gray-300 group-open:bg-rose-400 transition-colors rounded-full"></div>
+              <div className="flex items-center gap-3">
+                <div className="w-1 h-5 bg-gray-300 group-open:bg-rose-400 transition-colors rounded-full"></div>
                 <h3 className="font-bold text-lg text-gray-700">매매 기록 보관함 ({closedRecords.length})</h3>
               </div>
               <Icons.Down className="text-gray-400 group-open:rotate-180 transition-transform" />
@@ -562,286 +596,23 @@ function DashboardView({
   );
 }
 
-function SettingsView({ exchanges, onSave, Icons }: any) {
-  const [localExchanges, setLocalExchanges] = useState(exchanges);
-  const [newEx, setNewEx] = useState({ name: '', makerFee: '0.02', takerFee: '0.05' });
-
-  const handleAdd = () => {
-    if (!newEx.name) return;
-    const next = [...localExchanges, { ...newEx, id: Date.now().toString() }];
-    setLocalExchanges(next);
-    onSave(next);
-    setNewEx({ name: '', makerFee: '0.02', takerFee: '0.05' });
-  };
-
-  const handleDelete = (id: string) => {
-    if (confirm('이 거래소를 목록에서 삭제할까요?')) {
-      const next = localExchanges.filter((e: any) => e.id !== id);
-      setLocalExchanges(next);
-      onSave(next);
-    }
-  };
-
-  const handleUpdate = (id: string, field: string, value: string) => {
-    const next = localExchanges.map((e: any) => e.id === id ? { ...e, [field]: value } : e);
-    setLocalExchanges(next);
-  };
-
-  const handleBlur = () => {
-    onSave(localExchanges);
-  };
-
+// [NEW] 커스텀 토글 컴포넌트
+function ToggleSwitch({ options, value, onChange }: { options: string[], value: string, onChange: (val: string) => void }) {
   return (
-    <div className="space-y-6 animate-fade-in-up max-w-2xl mx-auto pb-20">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">환경 설정 ⚙️</h2>
-      
-      <div className="bg-white p-5 rounded-2xl shadow-sm border border-rose-100">
-        <h3 className="font-bold text-lg text-gray-700 mb-4 flex items-center gap-2">
-          <Icons.Fee size={20} className="text-rose-400"/> 거래소 및 수수료 관리
-        </h3>
-        <p className="text-xs text-gray-500 mb-6 leading-relaxed">
-          자주 사용하는 거래소와 수수료율(%)을 등록해두세요.<br/>매매 기록 시 자동 적용됩니다.
-        </p>
-        
-        <div className="space-y-4">
-          {localExchanges.map((ex: any) => (
-            <div key={ex.id} className="bg-rose-50/50 p-4 rounded-xl border border-rose-100 relative">
-              {/* 삭제 버튼 (모바일에서는 우측 상단 배치) */}
-              <button 
-                onClick={() => handleDelete(ex.id)} 
-                className="absolute top-2 right-2 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
-              >
-                <Icons.Delete size={16} />
-              </button>
-
-              <div className="flex flex-col md:flex-row gap-4 md:items-end">
-                {/* 거래소 이름 */}
-                <div className="flex-1">
-                  <label className="text-[10px] text-gray-400 font-bold mb-1 block ml-1">거래소명</label>
-                  <input 
-                    type="text" 
-                    value={ex.name} 
-                    onChange={(e) => handleUpdate(ex.id, 'name', e.target.value)}
-                    onBlur={handleBlur}
-                    className="w-full bg-white border-b-2 border-rose-100 focus:border-rose-400 px-3 py-2 outline-none text-sm font-bold text-gray-700 rounded-t-lg transition-colors"
-                  />
-                </div>
-
-                {/* 수수료 입력 그룹 */}
-                <div className="flex gap-3 w-full md:w-auto">
-                  <div className="flex-1">
-                    <span className="text-[10px] text-gray-400 font-bold mb-1 block ml-1">Maker(%)</span>
-                    <input 
-                      type="number" 
-                      step="0.01"
-                      value={ex.makerFee} 
-                      onChange={(e) => handleUpdate(ex.id, 'makerFee', e.target.value)}
-                      onBlur={handleBlur}
-                      className="w-full bg-white rounded-lg border border-rose-100 px-3 py-2 text-sm text-center outline-none focus:border-rose-300 font-mono"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <span className="text-[10px] text-gray-400 font-bold mb-1 block ml-1">Taker(%)</span>
-                    <input 
-                      type="number" 
-                      step="0.01"
-                      value={ex.takerFee} 
-                      onChange={(e) => handleUpdate(ex.id, 'takerFee', e.target.value)}
-                      onBlur={handleBlur}
-                      className="w-full bg-white rounded-lg border border-rose-100 px-3 py-2 text-sm text-center outline-none focus:border-rose-300 font-mono"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* 추가하기 섹션 */}
-        <div className="mt-6 pt-6 border-t border-dashed border-rose-200">
-          <p className="text-xs font-bold text-rose-400 mb-3 ml-1">새로운 거래소 추가</p>
-          <div className="flex flex-col md:flex-row gap-3 items-end">
-             <div className="w-full md:flex-1">
-               <input 
-                 placeholder="예: Bitget"
-                 value={newEx.name}
-                 onChange={(e) => setNewEx({...newEx, name: e.target.value})}
-                 className="w-full bg-gray-50 rounded-xl px-4 py-3 text-sm outline-none border border-transparent focus:bg-white focus:border-rose-300 transition-colors"
-               />
-             </div>
-             <div className="flex gap-2 w-full md:w-auto">
-               <div className="flex-1 md:w-20">
-                 <input 
-                   type="number" step="0.01"
-                   placeholder="Mk"
-                   value={newEx.makerFee}
-                   onChange={(e) => setNewEx({...newEx, makerFee: e.target.value})}
-                   className="w-full bg-gray-50 rounded-xl px-3 py-3 text-sm outline-none border border-transparent focus:bg-white focus:border-rose-300 transition-colors text-center"
-                 />
-               </div>
-               <div className="flex-1 md:w-20">
-                 <input 
-                   type="number" step="0.01"
-                   placeholder="Tk"
-                   value={newEx.takerFee}
-                   onChange={(e) => setNewEx({...newEx, takerFee: e.target.value})}
-                   className="w-full bg-gray-50 rounded-xl px-3 py-3 text-sm outline-none border border-transparent focus:bg-white focus:border-rose-300 transition-colors text-center"
-                 />
-               </div>
-               <button 
-                onClick={handleAdd} 
-                className={`${APP_CONFIG.theme.primary} ${APP_CONFIG.theme.primaryHover} text-white p-3 rounded-xl transition-transform active:scale-95 shadow-md shadow-rose-200 flex-shrink-0`}
-               >
-                 <Icons.Add size={20} />
-               </button>
-             </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function StatsView({ records, Icons }: any) {
-  const closed = records.filter((r: any) => r.status === 'Closed');
-  const wins = closed.filter((r: any) => r.pnl > 0).length;
-  const total = closed.length;
-  const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
-  
-  const totalNetPnl = closed.reduce((acc: number, cur: any) => acc + (parseFloat(cur.realizedPnlValue) || 0), 0);
-  const totalFees = closed.reduce((acc: number, cur: any) => acc + (parseFloat(cur.fees) || 0), 0);
-
-  return (
-    <div className="space-y-6 animate-fade-in-up">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">나의 트레이딩 성적표 📊</h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard label="총 매매" value={`${total}회`} icon={<Icons.Dashboard size={18} />} color="bg-blue-50 text-blue-600" />
-        <StatCard label="승률" value={`${winRate}%`} icon={<Icons.Up size={18} />} color="bg-rose-50 text-rose-600" />
-        <StatCard label="순수익(Net)" value={`$${formatNumber(totalNetPnl)}`} icon={<Icons.Profit size={18} />} color={totalNetPnl >= 0 ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"} />
-        <StatCard label="총 수수료" value={`$${formatNumber(totalFees)}`} icon={<Icons.Fee size={18} />} color="bg-gray-100 text-gray-600" />
-      </div>
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-rose-100 text-center text-gray-400 text-sm">
-        상세 통계 준비 중...
-      </div>
-    </div>
-  );
-}
-
-function StrategiesView({ strategies }: any) {
-  return (
-    <div className="space-y-6 animate-fade-in-up">
-      <h2 className="text-2xl font-bold text-gray-800">나의 매매 전략 노트 📝</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {strategies.map((s: any, idx: number) => (
-          <div key={idx} className="bg-white p-6 rounded-2xl shadow-sm border border-rose-100 hover:border-rose-300 transition-all">
-            <h3 className="font-bold text-lg text-rose-500 mb-2">{s.title}</h3>
-            <p className="text-gray-600 text-sm leading-relaxed">{s.description}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function StatCard({ label, value, icon, color }: any) {
-  return (
-    <div className="bg-white p-5 rounded-2xl shadow-sm border border-rose-50 flex flex-col gap-2">
-      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${color} mb-1`}>{icon}</div>
-      <span className="text-gray-400 text-xs">{label}</span>
-      <span className="text-xl font-bold text-gray-800">{value}</span>
-    </div>
-  );
-}
-
-function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons }: any) {
-  const isLong = record.position === 'Long';
-  return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm border border-rose-100 hover:shadow-lg transition-all relative group">
-      <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-        <button onClick={() => onEdit(record)} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-400 hover:text-rose-500"><Icons.Edit size={14} /></button>
-        <button onClick={() => onDelete(record)} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-400 hover:text-red-500"><Icons.Delete size={14} /></button>
-      </div>
-
-      <div className="flex items-center justify-between mb-4">
-        <span className={`text-xs font-bold px-2 py-1 rounded-md ${isLong ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-          {record.position.toUpperCase()} x{record.leverage}
-        </span>
-        <div className="flex items-center gap-2">
-          {record.exchange && <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">{record.exchange}</span>}
-          <span className="text-xs text-gray-400">{record.openDate.split('T')[0]}</span>
-        </div>
-      </div>
-
-      <h3 className="font-bold text-lg text-gray-800 mb-1 flex items-center gap-2">
-        <HighlightText text={record.symbol} highlight={searchTerm} />
-      </h3>
-      <div className={`${APP_CONFIG.theme.secondaryBg} text-xs ${APP_CONFIG.theme.accent} mb-4 inline-block px-2 py-0.5 rounded`}>
-         <HighlightText text={record.strategy || '전략 없음'} highlight={searchTerm} />
-      </div>
-
-      <div className="grid grid-cols-2 gap-2 text-sm">
-        <div>
-          <div className="text-gray-400 text-xs">진입가</div>
-          <div className="font-mono font-medium">{formatNumber(record.entryPrice)}</div>
-        </div>
-        <div>
-          <div className="text-gray-400 text-xs">Margin</div>
-          <div className="font-mono font-medium">${formatNumber(record.margin)}</div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function HistoryRow({ record, onEdit, onDelete, HighlightText, searchTerm, Icons }: any) {
-  const isProfit = record.pnl > 0;
-  return (
-    <div className="bg-white p-4 rounded-xl border border-gray-100 hover:border-rose-200 transition-all flex flex-col md:flex-row md:items-center gap-4 group">
-      <div className="flex justify-between items-center md:hidden">
-        <span className="text-xs text-gray-400">{record.openDate.split('T')[0]}</span>
-        <div className="flex gap-2">
-           <button onClick={() => onEdit(record)} className="text-gray-400"><Icons.Edit size={14} /></button>
-           <button onClick={() => onDelete(record)} className="text-gray-400"><Icons.Delete size={14} /></button>
-        </div>
-      </div>
-
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${record.position === 'Long' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-            {record.position.charAt(0)}
-          </span>
-          <h4 className="font-bold text-gray-700 truncate w-24 md:w-auto">
-            <HighlightText text={record.symbol} highlight={searchTerm} />
-          </h4>
-          <span className="text-xs text-gray-400">x{record.leverage}</span>
-          {record.exchange && <span className="text-[10px] text-gray-400 border border-gray-100 px-1 rounded ml-1 hidden md:inline">{record.exchange}</span>}
-        </div>
-        <div className="text-xs text-gray-500 flex flex-wrap items-center gap-2">
-          <span>{record.strategy}</span>
-          {record.exitReason && <span className="bg-gray-100 px-1 rounded text-[10px] text-gray-400">{record.exitReason}</span>}
-          {record.exitMemo && <span className={`${APP_CONFIG.theme.accent} text-[10px] truncate max-w-[150px]`}>💬 {record.exitMemo}</span>}
-        </div>
-      </div>
-
-      <div className="flex justify-between md:justify-end items-center gap-6 md:w-1/2">
-        <div className="text-right">
-          <div className="text-[10px] text-gray-400">PNL %</div>
-          <div className={`font-bold font-mono ${isProfit ? 'text-green-500' : 'text-red-500'}`}>
-            {record.pnl > 0 ? '+' : ''}{record.pnl}%
-          </div>
-        </div>
-        <div className="text-right w-20">
-          <div className="text-[10px] text-gray-400">순수익($)</div>
-          <div className={`font-bold font-mono text-sm ${isProfit ? 'text-green-500' : 'text-red-500'}`}>
-            ${formatNumber(record.realizedPnlValue)}
-          </div>
-          {record.fees > 0 && <div className="text-[9px] text-gray-300">수수료 -${record.fees}</div>}
-        </div>
-        <div className="hidden md:flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-           <button onClick={() => onEdit(record)} className="p-2 hover:bg-rose-50 rounded-full text-gray-400 hover:text-rose-500"><Icons.Edit size={16} /></button>
-           <button onClick={() => onDelete(record)} className="p-2 hover:bg-rose-50 rounded-full text-gray-400 hover:text-red-500"><Icons.Delete size={16} /></button>
-        </div>
-      </div>
+    <div className="bg-gray-100 p-1 rounded-full flex items-center relative h-8 w-32">
+      {options.map((opt) => (
+        <button
+          key={opt}
+          type="button"
+          onClick={() => onChange(opt)}
+          className={`flex-1 text-xs font-bold z-10 transition-colors ${value === opt ? 'text-rose-500' : 'text-gray-400'}`}
+        >
+          {opt}
+        </button>
+      ))}
+      <div 
+        className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white rounded-full shadow-sm transition-all duration-200 ease-out ${value === options[1] ? 'translate-x-[calc(100%+4px)]' : 'translate-x-1'}`}
+      />
     </div>
   );
 }
@@ -849,16 +620,16 @@ function HistoryRow({ record, onEdit, onDelete, HighlightText, searchTerm, Icons
 function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exchanges, existingSymbols, Icons }: any) {
   const [formData, setFormData] = useState({
     symbol: '',
-    exchange: exchanges[0]?.name || '', // Default exchange
+    exchange: exchanges[0]?.name || '', 
     position: 'Long',
     leverage: '1',
     margin: '',
     entryPrice: '',
-    entryType: 'Maker', // Maker or Taker
+    entryType: 'Maker', 
     openDate: getCurrentDateTimeString(),
     status: 'Open',
     closePrice: '',
-    exitType: 'Taker', // Maker or Taker
+    exitType: 'Taker', 
     exitReason: '',
     closeDate: '',
     strategy: strategies[0]?.title || '',
@@ -966,10 +737,12 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
           <div className="bg-blue-50/50 p-4 rounded-2xl space-y-3">
              <div className="flex justify-between items-center mb-1">
                 <span className="text-xs font-bold text-blue-400">진입 정보</span>
-                <div className="flex bg-white rounded-lg p-0.5 border border-blue-100">
-                  <button type="button" onClick={() => setFormData({...formData, entryType: 'Maker'})} className={`text-[10px] px-2 py-1 rounded ${formData.entryType === 'Maker' ? 'bg-blue-100 text-blue-600 font-bold' : 'text-gray-400'}`}>Maker</button>
-                  <button type="button" onClick={() => setFormData({...formData, entryType: 'Taker'})} className={`text-[10px] px-2 py-1 rounded ${formData.entryType === 'Taker' ? 'bg-blue-100 text-blue-600 font-bold' : 'text-gray-400'}`}>Taker</button>
-                </div>
+                {/* [NEW] 커스텀 토글 적용 */}
+                <ToggleSwitch 
+                  options={['Maker', 'Taker']} 
+                  value={formData.entryType} 
+                  onChange={(val) => setFormData({...formData, entryType: val})} 
+                />
              </div>
              <div className="grid grid-cols-2 gap-4">
                <FormInput label="진입가" name="entryPrice" type="number" step="any" value={formData.entryPrice} onChange={handleChange} required />
@@ -1015,10 +788,12 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                <div className="animate-fade-in space-y-3 p-4 bg-rose-50/50 rounded-2xl">
                  <div className="flex justify-between items-center mb-1">
                     <span className="text-xs font-bold text-rose-400">청산 세부</span>
-                    <div className="flex bg-white rounded-lg p-0.5 border border-rose-100">
-                      <button type="button" onClick={() => setFormData({...formData, exitType: 'Maker'})} className={`text-[10px] px-2 py-1 rounded ${formData.exitType === 'Maker' ? 'bg-rose-100 text-rose-600 font-bold' : 'text-gray-400'}`}>Maker</button>
-                      <button type="button" onClick={() => setFormData({...formData, exitType: 'Taker'})} className={`text-[10px] px-2 py-1 rounded ${formData.exitType === 'Taker' ? 'bg-rose-100 text-rose-600 font-bold' : 'text-gray-400'}`}>Taker</button>
-                    </div>
+                    {/* [NEW] 커스텀 토글 적용 */}
+                    <ToggleSwitch 
+                      options={['Maker', 'Taker']} 
+                      value={formData.exitType} 
+                      onChange={(val) => setFormData({...formData, exitType: val})} 
+                    />
                  </div>
                  <div className="grid grid-cols-2 gap-4">
                    <FormInput label="청산가" name="closePrice" type="number" step="any" value={formData.closePrice} onChange={handleChange} placeholder="입력시 자동 계산" />
