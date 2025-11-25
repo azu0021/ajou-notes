@@ -53,25 +53,25 @@ import {
 const APP_CONFIG = {
 theme: {
     // [Primary Color] 메인 버튼, 헤더 포인트, 강조 색상 (현재: 로즈 핑크)
-    primary: 'bg-rose-400',
+    primary: 'bg-pink-100',
     
     // [Primary Hover] 버튼 위에 마우스를 올렸을 때 색상 (조금 더 진한 핑크)
-    primaryHover: 'hover:bg-rose-500',
+    primaryHover: 'hover:bg-pink-150',
     
     // [Secondary Background] 앱 전체 배경색 (아주 연한 핑크)
-    secondaryBg: 'bg-pink-100',
+    secondaryBg: 'bg-pink-50',
     
     // [Card Background] 카드, 모달, 사이드바 등의 배경색 (흰색)
     cardBg: 'bg-white',
     
     // [Text Main] 기본 글자 색상 (진한 회색)
-    textMain: 'text-zinc-700',
+    textMain: 'text-stone-700',
     
     // [Text Sub] 보조 글자 색상 (연한 회색 - 설명, 날짜 등)
-    textSub: 'text-gray-500',
+    textSub: 'text-stone-500',
     
     // [Accent Text] 강조하고 싶은 텍스트 색상 (로즈 핑크)
-    accent: 'text-rose-500',
+    accent: 'text-pink-100',
     
     // [Highlight] 검색 결과 등 강조 표시 배경색 (노란 형광펜)
     highlight: 'bg-yellow-200',
