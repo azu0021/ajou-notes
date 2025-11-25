@@ -8,7 +8,7 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  // 외부 패키지의 최신 문법 오류를 해결해주는 설정
+  // 외부 패키지의 최신 문법 오류를 해결해주는 설정 (필수)
   transpilePackages: ['undici', 'firebase', '@firebase/auth'],
 };
 
