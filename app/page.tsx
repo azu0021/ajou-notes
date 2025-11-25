@@ -592,86 +592,109 @@ function SettingsView({ exchanges, onSave, Icons }: any) {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in-up max-w-2xl mx-auto">
+    <div className="space-y-6 animate-fade-in-up max-w-2xl mx-auto pb-20">
       <h2 className="text-2xl font-bold text-gray-800 mb-6">환경 설정 ⚙️</h2>
       
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-rose-100">
+      <div className="bg-white p-5 rounded-2xl shadow-sm border border-rose-100">
         <h3 className="font-bold text-lg text-gray-700 mb-4 flex items-center gap-2">
           <Icons.Fee size={20} className="text-rose-400"/> 거래소 및 수수료 관리
         </h3>
-        <p className="text-xs text-gray-500 mb-4">자주 사용하는 거래소와 수수료율(%)을 등록해두세요. 매매 기록 시 자동 적용됩니다.</p>
+        <p className="text-xs text-gray-500 mb-6 leading-relaxed">
+          자주 사용하는 거래소와 수수료율(%)을 등록해두세요.<br/>매매 기록 시 자동 적용됩니다.
+        </p>
         
-        <div className="space-y-3">
+        <div className="space-y-4">
           {localExchanges.map((ex: any) => (
-            <div key={ex.id} className="flex gap-2 items-center bg-rose-50/50 p-2 rounded-xl">
-              <input 
-                type="text" 
-                value={ex.name} 
-                onChange={(e) => handleUpdate(ex.id, 'name', e.target.value)}
-                onBlur={handleBlur}
-                className="flex-1 bg-transparent border-b border-rose-200 focus:border-rose-400 px-2 py-1 outline-none text-sm font-medium"
-              />
-              <div className="flex items-center gap-1">
-                <span className="text-xs text-gray-400">Maker(%)</span>
-                <input 
-                  type="number" 
-                  step="0.01"
-                  value={ex.makerFee} 
-                  onChange={(e) => handleUpdate(ex.id, 'makerFee', e.target.value)}
-                  onBlur={handleBlur}
-                  className="w-16 bg-white rounded border border-rose-100 px-2 py-1 text-sm text-center outline-none focus:border-rose-300"
-                />
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="text-xs text-gray-400">Taker(%)</span>
-                <input 
-                  type="number" 
-                  step="0.01"
-                  value={ex.takerFee} 
-                  onChange={(e) => handleUpdate(ex.id, 'takerFee', e.target.value)}
-                  onBlur={handleBlur}
-                  className="w-16 bg-white rounded border border-rose-100 px-2 py-1 text-sm text-center outline-none focus:border-rose-300"
-                />
-              </div>
-              <button onClick={() => handleDelete(ex.id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors">
+            <div key={ex.id} className="bg-rose-50/50 p-4 rounded-xl border border-rose-100 relative">
+              {/* 삭제 버튼 (모바일에서는 우측 상단 배치) */}
+              <button 
+                onClick={() => handleDelete(ex.id)} 
+                className="absolute top-2 right-2 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+              >
                 <Icons.Delete size={16} />
               </button>
+
+              <div className="flex flex-col md:flex-row gap-4 md:items-end">
+                {/* 거래소 이름 */}
+                <div className="flex-1">
+                  <label className="text-[10px] text-gray-400 font-bold mb-1 block ml-1">거래소명</label>
+                  <input 
+                    type="text" 
+                    value={ex.name} 
+                    onChange={(e) => handleUpdate(ex.id, 'name', e.target.value)}
+                    onBlur={handleBlur}
+                    className="w-full bg-white border-b-2 border-rose-100 focus:border-rose-400 px-3 py-2 outline-none text-sm font-bold text-gray-700 rounded-t-lg transition-colors"
+                  />
+                </div>
+
+                {/* 수수료 입력 그룹 */}
+                <div className="flex gap-3 w-full md:w-auto">
+                  <div className="flex-1">
+                    <span className="text-[10px] text-gray-400 font-bold mb-1 block ml-1">Maker(%)</span>
+                    <input 
+                      type="number" 
+                      step="0.01"
+                      value={ex.makerFee} 
+                      onChange={(e) => handleUpdate(ex.id, 'makerFee', e.target.value)}
+                      onBlur={handleBlur}
+                      className="w-full bg-white rounded-lg border border-rose-100 px-3 py-2 text-sm text-center outline-none focus:border-rose-300 font-mono"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <span className="text-[10px] text-gray-400 font-bold mb-1 block ml-1">Taker(%)</span>
+                    <input 
+                      type="number" 
+                      step="0.01"
+                      value={ex.takerFee} 
+                      onChange={(e) => handleUpdate(ex.id, 'takerFee', e.target.value)}
+                      onBlur={handleBlur}
+                      className="w-full bg-white rounded-lg border border-rose-100 px-3 py-2 text-sm text-center outline-none focus:border-rose-300 font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           ))}
         </div>
 
-        <div className="mt-4 pt-4 border-t border-dashed border-rose-200">
-          <div className="flex gap-2 items-end">
-             <div className="flex-1">
-               <label className="text-[10px] text-gray-400 font-bold ml-1">거래소명</label>
+        {/* 추가하기 섹션 */}
+        <div className="mt-6 pt-6 border-t border-dashed border-rose-200">
+          <p className="text-xs font-bold text-rose-400 mb-3 ml-1">새로운 거래소 추가</p>
+          <div className="flex flex-col md:flex-row gap-3 items-end">
+             <div className="w-full md:flex-1">
                <input 
                  placeholder="예: Bitget"
                  value={newEx.name}
                  onChange={(e) => setNewEx({...newEx, name: e.target.value})}
-                 className="w-full bg-gray-50 rounded-lg px-3 py-2 text-sm outline-none border border-transparent focus:bg-white focus:border-rose-300 transition-colors"
+                 className="w-full bg-gray-50 rounded-xl px-4 py-3 text-sm outline-none border border-transparent focus:bg-white focus:border-rose-300 transition-colors"
                />
              </div>
-             <div className="w-20">
-               <label className="text-[10px] text-gray-400 font-bold ml-1">Maker(%)</label>
-               <input 
-                 type="number" step="0.01"
-                 value={newEx.makerFee}
-                 onChange={(e) => setNewEx({...newEx, makerFee: e.target.value})}
-                 className="w-full bg-gray-50 rounded-lg px-3 py-2 text-sm outline-none border border-transparent focus:bg-white focus:border-rose-300 transition-colors text-center"
-               />
+             <div className="flex gap-2 w-full md:w-auto">
+               <div className="flex-1 md:w-20">
+                 <input 
+                   type="number" step="0.01"
+                   placeholder="Mk"
+                   value={newEx.makerFee}
+                   onChange={(e) => setNewEx({...newEx, makerFee: e.target.value})}
+                   className="w-full bg-gray-50 rounded-xl px-3 py-3 text-sm outline-none border border-transparent focus:bg-white focus:border-rose-300 transition-colors text-center"
+                 />
+               </div>
+               <div className="flex-1 md:w-20">
+                 <input 
+                   type="number" step="0.01"
+                   placeholder="Tk"
+                   value={newEx.takerFee}
+                   onChange={(e) => setNewEx({...newEx, takerFee: e.target.value})}
+                   className="w-full bg-gray-50 rounded-xl px-3 py-3 text-sm outline-none border border-transparent focus:bg-white focus:border-rose-300 transition-colors text-center"
+                 />
+               </div>
+               <button 
+                onClick={handleAdd} 
+                className={`${APP_CONFIG.theme.primary} ${APP_CONFIG.theme.primaryHover} text-white p-3 rounded-xl transition-transform active:scale-95 shadow-md shadow-rose-200 flex-shrink-0`}
+               >
+                 <Icons.Add size={20} />
+               </button>
              </div>
-             <div className="w-20">
-               <label className="text-[10px] text-gray-400 font-bold ml-1">Taker(%)</label>
-               <input 
-                 type="number" step="0.01"
-                 value={newEx.takerFee}
-                 onChange={(e) => setNewEx({...newEx, takerFee: e.target.value})}
-                 className="w-full bg-gray-50 rounded-lg px-3 py-2 text-sm outline-none border border-transparent focus:bg-white focus:border-rose-300 transition-colors text-center"
-               />
-             </div>
-             <button onClick={handleAdd} className={`${APP_CONFIG.theme.primary} ${APP_CONFIG.theme.primaryHover} text-white p-2.5 rounded-lg transition-colors shadow-md shadow-rose-200`}>
-               <Icons.Add size={18} />
-             </button>
           </div>
         </div>
       </div>
