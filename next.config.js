@@ -7,9 +7,24 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  // Webpack이 해석하다 체하지 않도록, 문제의 패키지들을 빌드에서 제외하고
-  // Node.js 런타임(v20)이 직접 실행하도록 넘겨버리는 설정입니다.
+  // 여기가 핵심입니다!
+  webpack: (config, { isServer }) => {
+    // 브라우저(Client) 환경 빌드일 때
+    if (!isServer) {
+      // undici 등 Node.js 전용 모듈을 아예 빈 껍데기(false)로 대체해버림
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        undici: false, 
+        net: false,
+        tls: false,
+        fs: false,
+        child_process: false,
+      };
+    }
+    return config;
+  },
   experimental: {
+    // 서버 사이드에서는 얘네를 건드리지 말고 놔둘 것
     serverComponentsExternalPackages: ['undici', 'firebase', '@firebase/auth'],
   },
 };
