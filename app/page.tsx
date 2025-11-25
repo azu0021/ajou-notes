@@ -485,7 +485,8 @@ function DashboardView({
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <div className="flex flex-col">
-            <h1 className="text-2xl font-bold text-zinc-600 mb-1">오늘의 싸움</h1>
+            {/* [변경] 폰트 크기 키우고 (text-3xl), 아래 간격 추가 (mb-2) */}
+            <h1 className="text-3xl font-bold text-zinc-600 mb-2">😎</h1>
             <p className={`${APP_CONFIG.theme.accent} text-sm font-medium`}>{userQuote}</p>
           </div>
         </div>
