@@ -430,7 +430,7 @@ export default function VeryDailyLog() {
         </nav>
         
         <div className="pt-6 border-t border-zinc-200">
-           <button onClick={handleExportCSV} className="flex items-center gap-2 text-sm text-zinc-500 hover:text-rose-500 transition-colors w-full p-2 rounded-lg hover:bg-zinc-50">
+           <button onClick={handleExportCSV} className="flex items-center gap-2 text-sm text-zinc-500 hover:text-rose-300 transition-colors w-full p-2 rounded-lg hover:bg-zinc-50">
              <Icons.Export size={16} /> 엑셀 다운로드
            </button>
         </div>
@@ -800,7 +800,7 @@ function StatsView({ records, Icons }: any) {
 
   return (
     <div className="space-y-6 animate-fade-in-up">
-      <h2 className="text-2xl font-bold text-zinc-700 mb-6">나의 트레이딩 성적표</h2>
+      <h2 className="text-2xl font-bold text-zinc-700 mb-6">성적표</h2>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard label="총 매매" value={`${total}회`} icon={<Icons.Dashboard size={18} />} color="bg-blue-50 text-blue-600" />
         <StatCard label="승률" value={`${winRate}%`} icon={<Icons.Up size={18} />} color="bg-rose-50 text-rose-600" />
