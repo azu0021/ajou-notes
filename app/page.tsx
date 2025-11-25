@@ -831,7 +831,7 @@ function StrategiesView({ strategies, onSave, Icons }: any) {
         <h2 className="text-2xl font-bold text-zinc-700">나의 매매 전략 노트</h2>
         <button 
           onClick={() => setIsAdding(!isAdding)}
-          className="flex items-center gap-2 bg-rose-50 text-rose-500 px-4 py-2 rounded-xl font-bold text-sm hover:bg-rose-100 transition-colors"
+          className="flex items-center gap-2 bg-rose-50 text-rose-400 px-4 py-2 rounded-xl font-bold text-sm hover:bg-rose-100 transition-colors"
         >
           {isAdding ? <><Icons.Close size={16}/> 취소</> : <><Icons.Add size={16}/> 전략 추가</>}
         </button>
@@ -860,7 +860,7 @@ function StrategiesView({ strategies, onSave, Icons }: any) {
             </div>
             <button 
               onClick={handleAdd}
-              className="w-full bg-rose-400 hover:bg-rose-500 text-white font-bold py-3 rounded-xl shadow-md shadow-rose-200 transition-colors"
+              className="w-full bg-rose-400 hover:bg-rose-400 text-white font-bold py-3 rounded-xl shadow-md shadow-rose-200 transition-colors"
             >
               저장하기
             </button>
@@ -873,7 +873,7 @@ function StrategiesView({ strategies, onSave, Icons }: any) {
         {strategies.map((s: any) => (
           <div key={s.id} className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-100 hover:border-rose-200 transition-all group relative">
             <div className="flex justify-between items-start mb-2">
-              <h3 className="font-bold text-lg text-rose-500">{s.title}</h3>
+              <h3 className="font-bold text-lg text-rose-400">{s.title}</h3>
               <button 
                 onClick={() => handleDelete(s.id)}
                 className="opacity-0 group-hover:opacity-100 text-zinc-300 hover:text-red-500 transition-all p-1"
@@ -904,7 +904,7 @@ function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons 
   return (
     <div className="bg-white rounded-2xl p-5 shadow-sm border border-zinc-100 hover:shadow-lg transition-all relative group">
       <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-        <button onClick={() => onEdit(record)} className="p-1.5 hover:bg-zinc-100 rounded-full text-zinc-400 hover:text-rose-500"><Icons.Edit size={14} /></button>
+        <button onClick={() => onEdit(record)} className="p-1.5 hover:bg-zinc-100 rounded-full text-zinc-400 hover:text-rose-400"><Icons.Edit size={14} /></button>
         <button onClick={() => onDelete(record)} className="p-1.5 hover:bg-zinc-100 rounded-full text-zinc-400 hover:text-red-500"><Icons.Delete size={14} /></button>
       </div>
 
@@ -984,7 +984,7 @@ function HistoryRow({ record, onEdit, onDelete, HighlightText, searchTerm, Icons
           {record.fees > 0 && <div className="text-[9px] text-zinc-300">수수료 -${record.fees}</div>}
         </div>
         <div className="hidden md:flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-           <button onClick={() => onEdit(record)} className="p-2 hover:bg-rose-50 rounded-full text-zinc-400 hover:text-rose-500"><Icons.Edit size={16} /></button>
+           <button onClick={() => onEdit(record)} className="p-2 hover:bg-rose-50 rounded-full text-zinc-400 hover:text-rose-400"><Icons.Edit size={16} /></button>
            <button onClick={() => onDelete(record)} className="p-2 hover:bg-rose-50 rounded-full text-zinc-400 hover:text-red-500"><Icons.Delete size={16} /></button>
         </div>
       </div>
@@ -1001,7 +1001,7 @@ function ToggleSwitch({ options, value, onChange }: { options: string[], value: 
           key={opt}
           type="button"
           onClick={() => onChange(opt)}
-          className={`flex-1 text-xs font-bold z-10 transition-colors ${value === opt ? 'text-rose-500' : 'text-zinc-400'}`}
+          className={`flex-1 text-xs font-bold z-10 transition-colors ${value === opt ? 'text-rose-400' : 'text-zinc-400'}`}
         >
           {opt}
         </button>
@@ -1173,9 +1173,9 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                    type="checkbox" 
                    checked={formData.status === 'Closed'} 
                    onChange={handleStatusChange} 
-                   className="w-5 h-5 rounded text-rose-500 focus:ring-rose-400 accent-rose-500 cursor-pointer"
+                   className="w-5 h-5 rounded text-rose-400 focus:ring-rose-400 accent-rose-400 cursor-pointer"
                  />
-                 <span className={`text-xs ${formData.status === 'Closed' ? 'text-rose-500 font-bold' : 'text-zinc-500'}`}>포지션 종료됨</span>
+                 <span className={`text-xs ${formData.status === 'Closed' ? 'text-rose-400 font-bold' : 'text-zinc-500'}`}>포지션 종료됨</span>
                </label>
              </div>
              
@@ -1272,7 +1272,7 @@ function SidebarItem({ icon, label, active, onClick }: any) {
     >
       {icon}
       <span className="text-sm">{label}</span>
-      {active && <div className="ml-auto w-1.5 h-1.5 bg-rose-500 rounded-full"></div>}
+      {active && <div className="ml-auto w-1.5 h-1.5 bg-rose-400 rounded-full"></div>}
     </button>
   );
 }
