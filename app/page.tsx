@@ -904,38 +904,41 @@ function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons 
   const isLong = record.position === 'Long';
   return (
     <div className="bg-white rounded-2xl p-5 shadow-sm border border-zinc-100 hover:shadow-lg transition-all relative group">
-      {/* 수정/삭제 버튼: 모바일에서도 터치 시 잘 눌리도록 z-index 확인 */}
+      {/* 수정/삭제 버튼 */}
       <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
         <button onClick={() => onEdit(record)} className="p-1.5 bg-white shadow-sm border border-zinc-100 rounded-full text-zinc-400 hover:text-rose-500"><Icons.Edit size={14} /></button>
-        <button onClick={() => onDelete(record)} className="p-1.5 bg-white shadow-sm border border-zinc-100 rounded-full text-zinc-400 hover:text-rose-400"><Icons.Delete size={14} /></button>
+        <button onClick={() => onDelete(record)} className="p-1.5 bg-white shadow-sm border border-zinc-100 rounded-full text-zinc-400 hover:text-red-500"><Icons.Delete size={14} /></button>
       </div>
 
-      {/* [수정] pr-16을 추가해서 오른쪽 버튼 자리 확보 (글자 겹침 방지) */}
-      <div className="flex items-center justify-between mb-4 pr-16">
-        <span className={`text-xs font-bold px-2 py-1 rounded-md ${isLong ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+      {/* 헤더 영역 수정됨 */}
+      <div className="flex items-center justify-between mb-4 pr-16 gap-2">
+        {/* [수정 1] whitespace-nowrap: 글자 줄바꿈 방지 / flex-shrink-0: 찌그러짐 방지 */}
+        <span className={`text-xs font-bold px-2 py-1 rounded-md whitespace-nowrap flex-shrink-0 ${isLong ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
           {record.position.toUpperCase()} x{record.leverage}
         </span>
-        <div className="flex items-center gap-2">
-          {record.exchange && <span className="text-[10px] bg-zinc-100 text-zinc-500 px-1.5 py-0.5 rounded">{record.exchange}</span>}
-          <span className="text-xs text-zinc-400">{record.openDate.split('T')[0]}</span>
+        
+        {/* [수정 2] 오른쪽 정보들도 한 줄 유지 */}
+        <div className="flex items-center gap-2 whitespace-nowrap overflow-hidden">
+          {record.exchange && <span className="text-[10px] bg-zinc-100 text-zinc-500 px-1.5 py-0.5 rounded flex-shrink-0">{record.exchange}</span>}
+          <span className="text-xs text-zinc-400 truncate">{record.openDate.split('T')[0]}</span>
         </div>
       </div>
 
-      <h3 className="font-bold text-lg text-zinc-700 mb-1 flex items-center gap-2">
+      <h3 className="font-bold text-lg text-zinc-700 mb-1 flex items-center gap-2 truncate">
         <HighlightText text={record.symbol} highlight={searchTerm} />
       </h3>
-      <div className={`${APP_CONFIG.theme.secondaryBg} text-xs ${APP_CONFIG.theme.accent} mb-4 inline-block px-2 py-0.5 rounded`}>
+      <div className={`${APP_CONFIG.theme.secondaryBg} text-xs ${APP_CONFIG.theme.accent} mb-4 inline-block px-2 py-0.5 rounded truncate max-w-full`}>
          <HighlightText text={record.strategy || '전략 없음'} highlight={searchTerm} />
       </div>
 
       <div className="grid grid-cols-2 gap-2 text-sm">
         <div>
           <div className="text-zinc-400 text-xs">진입가</div>
-          <div className="font-mono font-medium">{formatNumber(record.entryPrice)}</div>
+          <div className="font-mono font-medium truncate">{formatNumber(record.entryPrice)}</div>
         </div>
         <div>
           <div className="text-zinc-400 text-xs">Margin</div>
-          <div className="font-mono font-medium">${formatNumber(record.margin)}</div>
+          <div className="font-mono font-medium truncate">${formatNumber(record.margin)}</div>
         </div>
       </div>
     </div>
