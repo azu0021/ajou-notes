@@ -1014,56 +1014,6 @@ function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons 
   );
 }
 
-
-
-      <div className={`transition-opacity duration-200 ${isSelected ? 'opacity-40 blur-[1px]' : 'opacity-100'}`}>
-        <div className="text-zinc-400 text-xs mb-1.5 font-medium">
-          {record.openDate.split('T')[0]}
-        </div>
-
-        <div className="flex items-center gap-2 mb-5 flex-wrap">
-          <h3 className="text-2xl font-bold text-zinc-700 leading-none">
-            <HighlightText text={record.symbol} highlight={searchTerm} />
-          </h3>
-
-          <span className={`px-2 py-1 rounded-lg text-[11px] font-bold tracking-tight whitespace-nowrap ${isLong ? 'bg-green-400 text-white' : 'bg-rose-400 text-white'}`}>
-            {record.position.toUpperCase()} x{record.leverage}
-          </span>
-
-          {record.strategy && (
-             <span className="bg-zinc-100 text-rose-400 px-2 py-1 rounded-lg text-[11px] font-bold tracking-tight whitespace-nowrap truncate max-w-[100px]">
-               <HighlightText text={record.strategy} highlight={searchTerm} />
-             </span>
-          )}
-        </div>
-
-        <div className="flex items-end gap-5">
-          <div className="flex items-baseline gap-1">
-            <span className="text-zinc-400 text-xs font-bold transform translate-y-[-2px]">진입가</span>
-            <span className="font-mono text-xl font-bold text-zinc-700 leading-none">
-              {formatNumber(record.entryPrice)}
-            </span>
-          </div>
-          <div className="flex items-baseline gap-1">
-            <span className="text-zinc-400 text-xs font-bold transform translate-y-[-2px]">증거금</span>
-            <span className="font-mono text-xl font-bold text-zinc-700 leading-none">
-              ${formatNumber(record.margin)}
-            </span>
-          </div>
-        </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-
 // [수정] 청산(-100% 이하) 로직 적용 및 레이아웃 개선
 function HistoryRow({ record, onEdit, onDelete, HighlightText, searchTerm, Icons }: any) {
   // --- 청산(Liquidation) 로직 ---
