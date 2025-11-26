@@ -8,6 +8,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAnalytics } from 'firebase/analytics';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { ko } from 'date-fns/locale';
 import {
   getAuth,
   signInAnonymously,
@@ -1198,8 +1201,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                <FormInput label="진입가" name="entryPrice" type="number" step="any" value={formData.entryPrice} onChange={handleChange} requirose />
                <FormInput label="레버리지 (x)" name="leverage" type="number" value={formData.leverage} onChange={handleChange} requirose />
              </div>
-             <FormInput label="오픈 시간" name="openDate" type="datetime-local" value={formData.openDate} onChange={handleChange} />
-             <div>
+             <PinkDatePicker label="오픈 시간" selected={formData.openDate} onChange={(val: string) => handleChange({ target: { name: 'openDate', value: val } })} />
                <CustomSelect 
                  label="전략 & 근거"
                  name="strategy"
@@ -1275,7 +1277,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                  </div>
                  <div className="grid grid-cols-2 gap-4">
                    <FormInput label="청산가" name="closePrice" type="number" step="any" value={formData.closePrice} onChange={handleChange} placeholder="입력시 자동 계산" />
-                   <FormInput label="청산 시간" name="closeDate" type="datetime-local" value={formData.closeDate} onChange={handleChange} />
+                   <PinkDatePicker label="청산 시간" selected={formData.closeDate} onChange={(val: string) => handleChange({ target: { name: 'closeDate', value: val } })} />
                  </div>
                  
                  <div>
@@ -1357,3 +1359,49 @@ function CustomSelect({ label, value, onChange, options, placeholder, name, icon
     </div>
   );
 }
+// [추가] 핑크 테마가 적용된 커스텀 달력 컴포넌트
+const PinkDatePicker = ({ label, selected, onChange }: any) => {
+  return (
+    <div className="w-full">
+      <label className="block text-xs font-bold text-zinc-500 mb-1">{label}</label>
+      <div className="relative">
+        <DatePicker
+          selected={selected ? new Date(selected) : null}
+          onChange={(date) => {
+            // 날짜를 선택하면 "2025-11-26T13:00" 같은 문자열 형식으로 변환해서 저장
+            if (date) {
+               // 한국 시간대 보정 (UTC -> KST)
+               const offset = date.getTimezoneOffset() * 60000;
+               const localISOTime = (new Date(date.getTime() - offset)).toISOString().slice(0, 16);
+               onChange(localISOTime);
+            }
+          }}
+          showTimeSelect
+          timeFormat="HH:mm"
+          timeIntervals={15}
+          dateFormat="yyyy. MM. dd. aa h:mm" // 예: 2025. 11. 26. 오후 1:00
+          locale={ko} // 한글 달력
+          timeCaption="시간"
+          className="w-full p-2.5 bg-white rounded-xl border border-zinc-200 focus:border-rose-300 focus:outline-none text-sm font-bold text-zinc-700 cursor-pointer"
+          placeholderText="날짜를 선택하세요"
+          // 달력 팝업 스타일 커스텀 (핑크 테마)
+          calendarClassName="!border-0 !shadow-xl !rounded-2xl !font-sans overflow-hidden"
+          dayClassName={(date) => "hover:!bg-rose-100 !rounded-full"}
+        />
+        {/* 달력 아이콘 꾸미기 */}
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-rose-300">
+           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+        </div>
+      </div>
+      {/* react-datepicker 기본 파란색 헤더를 핑크색으로 덮어쓰기 위한 스타일 */}
+      <style jsx global>{`
+        .react-datepicker__header { background-color: #fff0f3 !important; border-bottom: none !important; }
+        .react-datepicker__current-month, .react-datepicker-time__header { color: #fb7185 !important; font-weight: 800 !important; }
+        .react-datepicker__day--selected, .react-datepicker__day--keyboard-selected { background-color: #fb7185 !important; border-radius: 50% !important; }
+        .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list li.react-datepicker__time-list-item--selected { background-color: #fb7185 !important; }
+        .react-datepicker__day-name { color: #fda4af !important; font-weight: bold; }
+        .react-datepicker-popper { z-index: 9999 !important; }
+      `}</style>
+    </div>
+  );
+};
