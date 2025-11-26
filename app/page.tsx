@@ -1402,3 +1402,30 @@ function CustomSelect({ label, value, onChange, options, placeholder, name, icon
     </div>
   );
 }
+function NavButton({ icon, label, active, onClick }: any) {
+  return (
+    <button 
+      onClick={onClick}
+      className={`flex flex-col items-center justify-center w-full py-2 transition-colors ${active ? 'text-rose-400' : 'text-zinc-300 hover:text-zinc-400'}`}
+    >
+      {icon}
+      <span className="text-[10px] font-bold mt-1">{label}</span>
+    </button>
+  );
+}
+
+function SidebarItem({ icon, label, active, onClick }: any) {
+  return (
+    <button 
+      onClick={onClick}
+      className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all font-bold text-sm mb-1 ${
+        active 
+          ? 'bg-rose-50 text-rose-500 shadow-sm shadow-rose-100' 
+          : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700'
+      }`}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
+  );
+}
