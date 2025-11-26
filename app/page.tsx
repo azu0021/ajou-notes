@@ -1413,7 +1413,9 @@ function SidebarItem({ icon, label, active, onClick }: any) {
   );
 }
 
-// 핑크 테마가 적용된 커스텀 달력 컴포넌트
+
+    
+// [수정] 화살표 디자인(흰색+배경) 개선 & 시간 스크롤 적용된 달력
 const PinkDatePicker = ({ label, selected, onChange }: any) => {
   return (
     <div className="w-full">
@@ -1434,17 +1436,14 @@ const PinkDatePicker = ({ label, selected, onChange }: any) => {
           dateFormat="yyyy. MM. dd. aa h:mm" 
           locale={ko} 
           timeCaption="시간"
-          // ▼ [핵심] 달력 위치 자동 조정 및 포탈 사용 (모달 밖으로 안 잘리게)
           popperPlacement="bottom-start"
           popperModifiers={[
             {
               name: "offset",
-              options: {
-                offset: [0, 8], // 간격 조정
-              },
+              options: { offset: [0, 8] },
             },
             {
-              name: "preventOverflow", // 화면 밖으로 나가는 것 방지
+              name: "preventOverflow",
               options: {
                 rootBoundary: "viewport",
                 tether: false,
@@ -1454,63 +1453,117 @@ const PinkDatePicker = ({ label, selected, onChange }: any) => {
           ]}
           className="w-full p-2.5 bg-white rounded-xl border border-zinc-200 focus:border-rose-300 focus:outline-none text-sm font-bold text-zinc-700 cursor-pointer"
           placeholderText="날짜를 선택하세요"
-          calendarClassName="custom-datepicker-calendar" // 클래스 이름 변경
+          calendarClassName="custom-datepicker-calendar"
           dayClassName={(date) => "hover:!bg-rose-100 !rounded-full"}
         />
+        {/* 입력창 오른쪽 달력 아이콘 */}
         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-rose-300">
            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
         </div>
       </div>
-      {/* 스타일 대폭 수정: 깨짐 방지 및 너비 확보 */}
+      
       <style jsx global>{`
+        /* 전체 달력 컨테이너 */
         .custom-datepicker-calendar {
           border: none !important;
           box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
           border-radius: 16px !important;
           font-family: inherit !important;
           overflow: hidden;
-          display: flex !important; /* 시간 컬럼과 달력을 가로로 배치 */
+          display: flex !important;
         }
+
+        /* 헤더 (연도/월) */
         .react-datepicker__header {
           background-color: #fff0f3 !important;
           border-bottom: 1px solid #fecdd3 !important;
-          padding-top: 12px !important;
+          padding-top: 15px !important; /* 높이 확보 */
+          padding-bottom: 15px !important;
+          position: relative;
         }
-        .react-datepicker__triangle { display: none !important; } /* 꼬다리 제거 (위치 깨짐 원인) */
-        .react-datepicker__month-container { float: left; }
+        
+        /* 1. 화살표 커스텀 (흰색 화살표 + 핑크 배경) */
+        .react-datepicker__navigation {
+          top: 13px !important; /* 수직 중앙 정렬 */
+          width: 24px !important;
+          height: 24px !important;
+          background-color: #fb7185 !important; /* 진한 핑크 배경 */
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: none !important;
+          transition: background-color 0.2s;
+        }
+        .react-datepicker__navigation:hover {
+          background-color: #f43f5e !important;
+        }
+        .react-datepicker__navigation--previous { left: 15px !important; }
+        .react-datepicker__navigation--next { right: 15px !important; }
+
+        /* 실제 화살표 아이콘 (흰색으로 변경) */
+        .react-datepicker__navigation-icon::before {
+          border-color: #ffffff !important; /* 흰색 */
+          border-width: 2px 2px 0 0 !important;
+          width: 6px !important;
+          height: 6px !important;
+          top: 9px !important; /* 아이콘 미세 조정 */
+        }
+        .react-datepicker__navigation--previous .react-datepicker__navigation-icon::before {
+          left: -1px !important; /* 아이콘 미세 조정 */
+        }
+        .react-datepicker__navigation--next .react-datepicker__navigation-icon::before {
+          left: -2px !important; /* 아이콘 미세 조정 */
+        }
+
+        /* 텍스트 스타일 */
         .react-datepicker__current-month, .react-datepicker-time__header {
           color: #fb7185 !important;
           font-weight: 800 !important;
-          font-size: 0.95rem !important;
+          font-size: 1rem !important;
         }
+        .react-datepicker__day-name { color: #fda4af !important; font-weight: bold; margin: 0.3rem !important; }
+        .react-datepicker__day { margin: 0.3rem !important; }
+        
+        /* 선택된 날짜 */
         .react-datepicker__day--selected, .react-datepicker__day--keyboard-selected {
           background-color: #fb7185 !important;
           color: white !important;
           border-radius: 50% !important;
         }
-        /* 시간 선택 영역 디자인 수정 */
+
+        /* 2. 시간 선택 영역 (스크롤 적용 & 높이 제한) */
         .react-datepicker__time-container {
           border-left: 1px solid #fecdd3 !important;
-          width: 90px !important; /* 너비 고정 */
+          width: 90px !important;
         }
         .react-datepicker__time-container .react-datepicker__time {
           background: white !important;
+          height: 285px !important; /* 달력 높이에 맞춰서 고정 (이게 핵심!) */
+          border-radius: 0 !important;
         }
         .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box {
-          width: 100% !important;
+          height: 100% !important;
+          border-radius: 0 !important;
         }
+        /* 시간 리스트 아이템 */
         .react-datepicker__time-list-item {
           height: auto !important;
           padding: 8px 0 !important;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           font-size: 0.85rem !important;
         }
+        /* 시간 선택시 색상 */
         .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list li.react-datepicker__time-list-item--selected {
           background-color: #fb7185 !important;
           color: white !important;
           font-weight: bold !important;
         }
-        .react-datepicker__day-name { color: #fda4af !important; font-weight: bold; margin: 0.3rem !important; }
-        .react-datepicker__day { margin: 0.3rem !important; }
+        
+        /* 꼬다리 제거 */
+        .react-datepicker__triangle { display: none !important; }
         .react-datepicker-popper { z-index: 9999 !important; }
       `}</style>
     </div>
