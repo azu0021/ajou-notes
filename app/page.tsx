@@ -1,14 +1,9 @@
 'use client';
 
-/**
- * ☝️ [중요] Next.js App Router에서 useState, useEffect 등을 쓰려면
- * 반드시 파일 최상단에 'use client'; 가 있어야 해!
- */
-
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom'; // 달력 포탈용
 import { initializeApp } from 'firebase/app';
 import { getAnalytics } from 'firebase/analytics';
-import { createPortal } from 'react-dom';
 import {
   getAuth,
   GoogleAuthProvider,
@@ -51,14 +46,13 @@ import {
   MessageSquareQuote,
   Image as ImageIcon,
 } from 'lucide-react';
-// 달력 라이브러리
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { ko } from 'date-fns/locale';
 
 /**
  * ------------------------------------------------------------------
- * [앱 설정 및 테마]
+ * [앱 설정]
  * ------------------------------------------------------------------
  */
 const APP_CONFIG = {
@@ -107,11 +101,6 @@ const DEFAULT_EXCHANGES = [
   { id: 'upbit', name: 'Upbit', makerFee: 0.05, takerFee: 0.05 },
 ];
 
-/**
- * ------------------------------------------------------------------
- * [Firebase Init]
- * ------------------------------------------------------------------
- */
 const firebaseConfig = {
   apiKey: "AIzaSyApCBDZtKlXoeclGosSDwYGrZxmLlvRHc4",
   authDomain: "berry-log.firebaseapp.com",
@@ -136,7 +125,6 @@ if (typeof window !== 'undefined') {
 
 const appId = 'very-daily-log';
 
-// 유틸리티 함수들
 const formatNumber = (num: any) => {
   if (num === '' || num === null || num === undefined) return '';
   return Number(num).toLocaleString(undefined, { maximumFractionDigits: 2 });
@@ -149,7 +137,7 @@ const getCurrentDateTimeString = () => {
 
 /**
  * ------------------------------------------------------------------
- * [메인 앱 컴포넌트]
+ * [메인 컴포넌트]
  * ------------------------------------------------------------------
  */
 export default function VeryDailyLog() {
@@ -169,16 +157,14 @@ export default function VeryDailyLog() {
 
   const Icons = APP_CONFIG.icons;
 
-  // Auth Init
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
-      setLoading(false); // 로딩 끝!
+      setLoading(false);
     });
     return () => unsubscribe();
   }, []);
 
-  // 구글 로그인 함수
   const handleLogin = async () => {
     try {
       const provider = new GoogleAuthProvider();
@@ -188,13 +174,11 @@ export default function VeryDailyLog() {
     }
   };
 
-  // 로그아웃 함수
   const handleLogout = () => {
     signOut(auth);
     setRecords([]);
   };
 
-  // Data Fetching
   useEffect(() => {
     if (!user) return;
     setLoading(true);
@@ -213,7 +197,6 @@ export default function VeryDailyLog() {
     return () => unsubscribe();
   }, [user]);
 
-  // Settings Fetching
   useEffect(() => {
     if (!user) return;
     const fetchSettings = async () => {
@@ -269,13 +252,11 @@ export default function VeryDailyLog() {
     }
   };
 
-  // --- Derived State ---
   const uniqueSymbols = useMemo(() => {
     const symbols = new Set(records.map(r => r.symbol?.toUpperCase()).filter(Boolean));
     return Array.from(symbols).sort();
   }, [records]);
 
-  // --- CRUD Functions ---
   const handleSave = async (formData: any) => {
     if (!user) return;
     let finalData = { ...formData };
@@ -338,7 +319,7 @@ export default function VeryDailyLog() {
 
   const handleExportCSV = () => {
     const BOM = '\uFEFF';
-    const header = ['날짜', '거래소', '종목', '포지션', '진입가', '청산가', '레버리지', '수익률(%)', '순수익($)', '수수료($)', '전략', '메모'];
+    const header = ['날짜', '거래소', '종목', '포지션', '진입가', '청산가', '레버리지', '수익률(%)', '순수익(USDT)', '수수료(USDT)', '전략', '메모'];
     const rows = records.map(r => [
       r.openDate,
       r.exchange || '-',
@@ -399,7 +380,6 @@ export default function VeryDailyLog() {
 
   if (loading && !user) return <div className={`min-h-screen flex items-center justify-center ${APP_CONFIG.theme.secondaryBg} ${APP_CONFIG.theme.accent} animate-pulse font-sans`}>로딩중...</div>;
   
-  // 로그인 화면
   if (!user) {
     return (
       <div className={`min-h-screen flex flex-col items-center justify-center ${APP_CONFIG.theme.secondaryBg} p-6`}>
@@ -442,7 +422,6 @@ export default function VeryDailyLog() {
       {/* Desktop Sidebar */}
       <div className={`hidden md:flex fixed left-0 top-0 bottom-0 w-64 ${APP_CONFIG.theme.sidebarBg} border-r border-zinc-200 flex-col p-6 shadow-sm z-40`}>
         
-        {/* 로고 영역 */}
         <div className="mb-10 pl-1">
           <div className="flex flex-col text-zinc-700 leading-none">
             <span className="text-4xl font-light tracking-tight mb-1">Very</span>
@@ -464,7 +443,6 @@ export default function VeryDailyLog() {
            <button onClick={handleExportCSV} className="flex items-center gap-2 text-sm text-zinc-500 hover:text-rose-300 transition-colors w-full p-2 rounded-lg hover:bg-zinc-50">
              <Icons.Export size={16} /> 엑셀 다운로드
            </button>
-           {/* 로그아웃 버튼 */}
            <button onClick={handleLogout} className="flex items-center gap-2 text-sm text-zinc-400 hover:text-rose-400 transition-colors w-full p-2 rounded-lg hover:bg-zinc-50">
              <Icons.Close size={16} /> 로그아웃
            </button>
@@ -590,11 +568,9 @@ function DashboardView({
       <section>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            {/* [수정] 색상 통일 (bg-rose-400) */}
             <div className="w-2 h-2 bg-rose-400 rounded-full"></div>
             <h3 className="font-bold text-lg text-zinc-700">
               진행 중인 포지션 
-              {/* [수정] 괄호 없이 숫자만 핑크색으로 표시 */}
               <span className="text-rose-400 ml-1.5">{openPositions.length}</span>
             </h3>
           </div>
@@ -634,9 +610,7 @@ function DashboardView({
           <summary className="list-none cursor-pointer mb-3 select-none [&::-webkit-details-marker]:hidden">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                {/* [수정] 색상 통일 (bg-rose-400) */}
                 <div className="w-2 h-2 bg-rose-400 rounded-full transition-colors"></div>
-                {/* [수정] 여기는 숫자 아예 제거함 */}
                 <h3 className="font-bold text-lg text-zinc-700">매매 기록 보관함</h3>
               </div>
               <Icons.Down className="text-zinc-400 group-open:rotate-180 transition-transform" />
@@ -848,8 +822,8 @@ function StatsView({ records, Icons }: any) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard label="총 매매" value={`${total}회`} icon={<Icons.Dashboard size={18} />} color="bg-blue-50 text-blue-600" />
         <StatCard label="승률" value={`${winRate}%`} icon={<Icons.Up size={18} />} color="bg-rose-50 text-rose-400" />
-        <StatCard label="순수익(Net)" value={`$${formatNumber(totalNetPnl)}`} icon={<Icons.Profit size={18} />} color={totalNetPnl >= 0 ? "bg-green-50 text-green-600" : "bg-rose-50 text-rose-600"} />
-        <StatCard label="총 수수료" value={`$${formatNumber(totalFees)}`} icon={<Icons.Fee size={18} />} color="bg-zinc-100 text-zinc-600" />
+        <StatCard label="순수익(Net)" value={`${formatNumber(totalNetPnl)} USDT`} icon={<Icons.Profit size={18} />} color={totalNetPnl >= 0 ? "bg-green-50 text-green-600" : "bg-rose-50 text-rose-600"} />
+        <StatCard label="총 수수료" value={`${formatNumber(totalFees)} USDT`} icon={<Icons.Fee size={18} />} color="bg-zinc-100 text-zinc-600" />
       </div>
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-zinc-100 text-center text-zinc-400 text-sm">
         상세 통계 준비 중...
@@ -952,39 +926,40 @@ function StatCard({ label, value, icon, color }: any) {
 function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons }: any) {
   const [isSelected, setIsSelected] = useState(false);
   const isLong = record.position === 'Long';
+  
   return (
     <div 
       onClick={() => setIsSelected(!isSelected)}
-      className={`relative rounded-3xl p-5 border transition-all duration-200 cursor-pointer select-none
+      className={`relative rounded-3xl p-5 border transition-all duration-200 cursor-pointer select-none overflow-hidden
         ${isSelected 
           ? 'bg-rose-50 border-rose-200 shadow-inner' 
           : 'bg-white border-zinc-100 shadow-sm hover:shadow-md'
         }`}
     >
       {isSelected && (
-        <div className="absolute top-1/2 right-4 -translate-y-1/2 flex gap-2 z-10 animate-fade-in">
+        <div className="absolute top-4 right-4 flex gap-2 z-10 animate-fade-in">
            <button 
              onClick={(e) => { e.stopPropagation(); onEdit(record); }} 
-             className="w-10 h-10 bg-white shadow-md rounded-full flex items-center justify-center text-zinc-400 hover:text-rose-500 hover:scale-110 transition-all"
+             className="w-9 h-9 bg-white shadow-md rounded-full flex items-center justify-center text-zinc-400 hover:text-rose-500 active:scale-95 transition-all"
            >
-             <Icons.Edit size={18} />
+             <Icons.Edit size={16} />
            </button>
            <button 
              onClick={(e) => { e.stopPropagation(); onDelete(record); }} 
-             className="w-10 h-10 bg-white shadow-md rounded-full flex items-center justify-center text-zinc-400 hover:text-rose-500 hover:scale-110 transition-all"
+             className="w-9 h-9 bg-white shadow-md rounded-full flex items-center justify-center text-zinc-400 hover:text-rose-500 active:scale-95 transition-all"
            >
-             <Icons.Delete size={18} />
+             <Icons.Delete size={16} />
            </button>
         </div>
       )}
 
       <div className={`transition-opacity duration-200 ${isSelected ? 'opacity-40 blur-[1px]' : 'opacity-100'}`}>
-        <div className="text-zinc-400 text-xs mb-1.5 font-medium">
+        <div className="text-zinc-400 text-xs mb-2 font-medium">
           {record.openDate.split('T')[0]}
         </div>
 
-        <div className="flex items-center gap-2 mb-5 flex-wrap">
-          <h3 className="text-2xl font-bold text-zinc-700 leading-none">
+        <div className="flex flex-wrap items-center gap-2 mb-6 pr-10">
+          <h3 className="text-2xl font-bold text-zinc-700 leading-none tracking-tight">
             <HighlightText text={record.symbol} highlight={searchTerm} />
           </h3>
 
@@ -993,25 +968,27 @@ function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons 
           </span>
 
           {record.strategy && (
-             <span className="bg-zinc-100 text-rose-400 px-2 py-1 rounded-lg text-[11px] font-bold tracking-tight whitespace-nowrap truncate max-w-[100px]">
+             <span className="bg-zinc-100 text-rose-400 px-2 py-1 rounded-lg text-[11px] font-bold tracking-tight whitespace-nowrap truncate max-w-[120px]">
                <HighlightText text={record.strategy} highlight={searchTerm} />
              </span>
           )}
         </div>
 
-        {/* 3. 진입가 & 증거금 데이터 (수정됨) */}
-        <div className="flex items-end gap-5">
-          <div className="flex items-baseline gap-1">
-            <span className="text-zinc-400 text-xs font-bold transform translate-y-[-2px]">진입가</span>
+        <div className="flex items-end gap-6 w-full">
+          <div className="flex flex-col">
+            <span className="text-zinc-400 text-[10px] font-bold mb-0.5 ml-0.5">진입가</span>
             <span className="font-mono text-xl font-bold text-zinc-700 leading-none">
               {formatNumber(record.entryPrice)}
             </span>
           </div>
-          <div className="flex items-baseline gap-1">
-            <span className="text-zinc-400 text-xs font-bold transform translate-y-[-2px]">증거금</span>
-            <span className="font-mono text-xl font-bold text-zinc-700 leading-none">
-              ${formatNumber(record.margin)}
-            </span>
+          <div className="flex flex-col">
+            <span className="text-zinc-400 text-[10px] font-bold mb-0.5 ml-0.5">증거금</span>
+            <div className="flex items-baseline gap-0.5">
+              <span className="font-mono text-xl font-bold text-zinc-700 leading-none">
+                {formatNumber(record.margin)}
+              </span>
+              <span className="text-[10px] text-zinc-400 font-medium">USDT</span>
+            </div>
           </div>
         </div>
       </div>
@@ -1019,9 +996,7 @@ function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons 
   );
 }
 
-// [수정] 우측 여백 제거 + 수정/삭제 버튼 오버레이(Floating) 적용
 function HistoryRow({ record, onEdit, onDelete, HighlightText, searchTerm, Icons }: any) {
-  // --- 청산 & 고수익 로직 ---
   const pnl = parseFloat(record.pnl);
   const isLiquidation = pnl <= -100;
   const isMegaWin = pnl >= 100;
@@ -1038,7 +1013,6 @@ function HistoryRow({ record, onEdit, onDelete, HighlightText, searchTerm, Icons
   return (
     <div className="bg-white p-5 rounded-2xl border border-zinc-100 hover:border-rose-200 transition-all relative group shadow-sm">
       
-      {/* 🔥 [NEW] 수정/삭제 버튼: 우측 상단에 둥둥 떠있게 수정 (공간 차지 X) */}
       <div className="hidden md:flex absolute top-1/2 -translate-y-1/2 right-4 gap-1 opacity-0 group-hover:opacity-100 transition-all z-10 bg-white/90 backdrop-blur-sm p-1 rounded-xl shadow-sm border border-zinc-100">
          <button 
            onClick={(e) => {e.stopPropagation(); onEdit(record)}} 
@@ -1055,7 +1029,6 @@ function HistoryRow({ record, onEdit, onDelete, HighlightText, searchTerm, Icons
       </div>
 
       <div className="flex flex-col md:flex-row md:items-center gap-4">
-        {/* 모바일 헤더 (날짜 + 모바일용 버튼) */}
         <div className="flex justify-between items-center md:hidden">
           <span className="text-xs text-zinc-400">{record.openDate.split('T')[0]}</span>
           <div className="flex gap-2">
@@ -1064,37 +1037,29 @@ function HistoryRow({ record, onEdit, onDelete, HighlightText, searchTerm, Icons
           </div>
         </div>
 
-        {/* 왼쪽: 종목 정보 */}
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1">
-            {/* 포지션 뱃지 */}
             <div className={`w-5 h-5 rounded flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${record.position === 'Long' ? 'bg-green-100 text-green-600' : 'bg-rose-100 text-rose-600'}`}>
               {record.position.charAt(0)}
             </div>
             
-            {/* 종목명 */}
             <h4 className="text-base font-bold text-zinc-700 truncate mr-1 leading-none">
               <HighlightText text={record.symbol} highlight={searchTerm} />
             </h4>
 
-            {/* 뱃지들 */}
             {isLiquidation && <span className="bg-zinc-500 text-white text-[10px] px-1.5 py-0.5 rounded font-bold flex-shrink-0 leading-tight">LIQ 🤮</span>}
             {isMegaWin && <span className="bg-gradient-to-r from-orange-300 to-purple-500 text-white text-[10px] px-1.5 py-0.5 rounded font-bold shadow-sm flex-shrink-0 leading-tight">100%🚀</span>}
             {isBigWin && <span className="bg-lime-500 text-white text-[10px] px-1.5 py-0.5 rounded font-bold flex-shrink-0 leading-tight">50🔥</span>}
 
-            {/* 전략 태그 */}
             <span className="bg-zinc-100 text-zinc-400 text-[10px] px-1.5 py-0.5 rounded font-medium truncate max-w-[100px] leading-tight">
               <HighlightText text={record.strategy || '-'} highlight={searchTerm} />
             </span>
-             {/* SL Hit 등 */}
             {record.exitReason && <span className="bg-zinc-100 text-zinc-400 text-[10px] px-1.5 py-0.5 rounded font-medium leading-tight">{record.exitReason}</span>}
           </div>
           
-          {/* 하단 메모 */}
           {record.exitMemo && <div className="text-[11px] text-zinc-400 truncate pl-7">💬 {record.exitMemo}</div>}
         </div>
 
-        {/* 오른쪽: 수익 정보 (버튼 영역 삭제하여 우측 밀착) */}
         <div className="flex justify-between md:justify-end items-center gap-6 md:w-1/2 pl-9 md:pl-0">
           <div className="text-right">
             <div className="text-[10px] text-zinc-400 font-bold mb-0.5">PNL %</div>
@@ -1103,7 +1068,6 @@ function HistoryRow({ record, onEdit, onDelete, HighlightText, searchTerm, Icons
             </div>
           </div>
           
-          {/* 오른쪽 끝에 딱 붙게 됨 */}
           <div className="text-right w-24">
             <div className="text-[10px] text-zinc-400 font-bold mb-0.5">순수익(USDT)</div>
             <div className={`text-lg font-bold font-mono leading-none ${isProfit ? 'text-green-500' : 'text-rose-400'}`}>
@@ -1213,13 +1177,8 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
   if (!isOpen) return null;
 
   return (
-    // [수정] 모바일: items-end (바닥 정렬), PC: items-center (중앙 정렬)
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center md:p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
-      
-      {/* [수정] 모바일: 둥근 모서리 위쪽만 + 높이조절(dvh) / PC: 전체 둥글게 */}
       <div className="bg-white w-full md:w-full md:max-w-lg rounded-t-[32px] md:rounded-3xl shadow-2xl max-h-[90dvh] md:max-h-[85vh] overflow-y-auto custom-scrollbar relative flex flex-col">
-        
-        {/* 헤더: 스크롤해도 상단에 고정 */}
         <div className="sticky top-0 bg-white z-20 px-6 py-5 border-b border-zinc-100 flex justify-between items-center shrink-0">
           <h3 className="font-bold text-xl text-zinc-700">{initialData ? '매매 기록 수정' : '새 매매 기록'}</h3>
           <button onClick={onClose} className="p-2 hover:bg-zinc-100 rounded-full transition-colors">
@@ -1227,9 +1186,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
           </button>
         </div>
         
-        {/* 폼 내용 */}
         <form onSubmit={handleSubmit} className="p-6 space-y-5 pb-10">
-          {/* Exchange & Symbol */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <CustomSelect 
@@ -1258,7 +1215,6 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
             </div>
           </div>
 
-          {/* Position & Margin */}
           <div className="flex gap-4">
              <div className="w-1/2">
                 <label className="block text-xs font-bold text-zinc-500 mb-1">포지션</label>
@@ -1272,7 +1228,6 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
              </div>
           </div>
 
-          {/* Entry Info */}
           <div className="bg-zinc-50 p-5 rounded-2xl space-y-4 border border-zinc-100">
              <div className="flex justify-between items-center mb-1">
                 <span className="text-xs font-bold text-rose-400">진입 정보</span>
@@ -1339,7 +1294,6 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
              </div>
           </div>
 
-          {/* Exit Info */}
           <div className="border-t border-dashed border-zinc-200 my-2"></div>
           <div className="space-y-4">
              <div className="flex justify-between items-center">
@@ -1406,6 +1360,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
       </div>
     </div>
   );
+}
 
 function FormInput({ label, ...props }: any) {
   return (
@@ -1534,8 +1489,6 @@ function DeleteConfirmModal({ target, onClose, onConfirm, Icons }: any) {
   );
 }
 
-// [최종] 아이콘 삭제됨 + 화살표 디자인 개선 + 방향 조절 가능
-// [최종_수정] 포탈(Portal) 기술 적용: 달력을 body로 꺼내서 위치 버그 및 잘림 해결
 const PinkDatePicker = ({ label, selected, onChange, placement = "bottom-start" }: any) => {
   return (
     <div className="w-full">
@@ -1556,9 +1509,7 @@ const PinkDatePicker = ({ label, selected, onChange, placement = "bottom-start" 
           dateFormat="yyyy. MM. dd. aa h:mm" 
           locale={ko} 
           timeCaption="시간"
-          // ▼ [핵심] 달력 방향 설정
           popperPlacement={placement}
-          // ▼ [핵심] 달력을 모달 밖(body)으로 꺼내서 그리는 '포탈' 기능 (위치 버그 해결사!)
           popperContainer={({ children }) => {
             if (typeof window === 'undefined') return null;
             return createPortal(children, document.body);
@@ -1569,7 +1520,7 @@ const PinkDatePicker = ({ label, selected, onChange, placement = "bottom-start" 
               options: { offset: [0, 8] },
             },
             {
-              name: "preventOverflow", // 화면 밖으로 나가는 것 방지
+              name: "preventOverflow",
               options: {
                 rootBoundary: "viewport",
                 tether: false,
@@ -1585,7 +1536,6 @@ const PinkDatePicker = ({ label, selected, onChange, placement = "bottom-start" 
       </div>
       
       <style jsx global>{`
-        /* 전체 컨테이너 */
         .custom-datepicker-calendar {
           border: none !important;
           box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
@@ -1594,10 +1544,9 @@ const PinkDatePicker = ({ label, selected, onChange, placement = "bottom-start" 
           overflow: hidden;
           display: flex !important;
           background-color: white;
-          z-index: 9999 !important; /* 제일 위에 뜨게 함 */
+          z-index: 9999 !important;
         }
 
-        /* 달력 영역 */
         .react-datepicker__month-container {
           float: left;
           width: 240px;
@@ -1612,7 +1561,6 @@ const PinkDatePicker = ({ label, selected, onChange, placement = "bottom-start" 
           position: relative;
         }
         
-        /* 화살표 버튼 */
         .react-datepicker__navigation {
           top: 14px !important;
           width: 26px !important;
@@ -1627,7 +1575,6 @@ const PinkDatePicker = ({ label, selected, onChange, placement = "bottom-start" 
         .react-datepicker__navigation--previous { left: 10px !important; }
         .react-datepicker__navigation--next { right: 100px !important; }
 
-        /* 화살표 아이콘 (진한 핑크) */
         .react-datepicker__navigation-icon::before {
           border-color: #fb7185 !important;
           border-width: 2px 2px 0 0 !important;
@@ -1638,7 +1585,6 @@ const PinkDatePicker = ({ label, selected, onChange, placement = "bottom-start" 
         .react-datepicker__navigation--previous .react-datepicker__navigation-icon::before { left: -1px !important; }
         .react-datepicker__navigation--next .react-datepicker__navigation-icon::before { left: -2px !important; }
 
-        /* 텍스트 스타일 */
         .react-datepicker__current-month {
           color: #fb7185 !important;
           font-weight: 800 !important;
@@ -1653,7 +1599,6 @@ const PinkDatePicker = ({ label, selected, onChange, placement = "bottom-start" 
         }
         .react-datepicker__day:hover { border-radius: 50% !important; }
 
-        /* 시간 영역 */
         .react-datepicker__time-container {
           width: 90px !important;
           border-left: none !important;
