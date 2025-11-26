@@ -996,14 +996,17 @@ function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons 
   );
 }
 
+// [최종] 매매 기록 보관함도 '터치 시 버튼 등장' 방식으로 통일
 function HistoryRow({ record, onEdit, onDelete, HighlightText, searchTerm, Icons }: any) {
+  // [추가] 선택 상태 관리 (터치/클릭 여부)
+  const [isSelected, setIsSelected] = useState(false);
+
   const pnl = parseFloat(record.pnl);
   const isLiquidation = pnl <= -100;
   const isMegaWin = pnl >= 100;
   const isBigWin = pnl >= 50 && pnl < 100;
   
   const displayPnl = isLiquidation ? -100 : pnl;
-  
   const displayNetProfit = isLiquidation 
     ? -1 * (Number(record.margin) + Number(record.fees)) 
     : record.realizedPnlValue;
@@ -1011,32 +1014,43 @@ function HistoryRow({ record, onEdit, onDelete, HighlightText, searchTerm, Icons
   const isProfit = displayPnl > 0;
 
   return (
-    <div className="bg-white p-5 rounded-2xl border border-zinc-100 hover:border-rose-200 transition-all relative group shadow-sm">
+    <div 
+      // [수정] 클릭 시 선택 상태 토글
+      onClick={() => setIsSelected(!isSelected)}
+      className={`relative rounded-2xl p-5 border transition-all duration-200 cursor-pointer select-none overflow-hidden
+        ${isSelected 
+          ? 'bg-rose-50 border-rose-200 shadow-inner' 
+          : 'bg-white border-zinc-100 hover:border-rose-200 shadow-sm'
+        }`}
+    >
       
-      <div className="hidden md:flex absolute top-1/2 -translate-y-1/2 right-4 gap-1 opacity-0 group-hover:opacity-100 transition-all z-10 bg-white/90 backdrop-blur-sm p-1 rounded-xl shadow-sm border border-zinc-100">
-         <button 
-           onClick={(e) => {e.stopPropagation(); onEdit(record)}} 
-           className="p-2 hover:bg-rose-50 rounded-full text-zinc-400 hover:text-rose-400 transition-colors"
-         >
-           <Icons.Edit size={16} />
-         </button>
-         <button 
-           onClick={(e) => {e.stopPropagation(); onDelete(record)}} 
-           className="p-2 hover:bg-rose-50 rounded-full text-zinc-400 hover:text-rose-400 transition-colors"
-         >
-           <Icons.Delete size={16} />
-         </button>
-      </div>
+      {/* [수정] 선택되었을 때만 우측 상단에 버튼 등장 (진행 중인 포지션과 동일) */}
+      {isSelected && (
+        <div className="absolute top-4 right-4 flex gap-2 z-10 animate-fade-in">
+           <button 
+             onClick={(e) => {e.stopPropagation(); onEdit(record)}} 
+             className="w-9 h-9 bg-white shadow-md rounded-full flex items-center justify-center text-zinc-400 hover:text-rose-500 active:scale-95 transition-all"
+           >
+             <Icons.Edit size={16} />
+           </button>
+           <button 
+             onClick={(e) => {e.stopPropagation(); onDelete(record)}} 
+             className="w-9 h-9 bg-white shadow-md rounded-full flex items-center justify-center text-zinc-400 hover:text-rose-500 active:scale-95 transition-all"
+           >
+             <Icons.Delete size={16} />
+           </button>
+        </div>
+      )}
 
-      <div className="flex flex-col md:flex-row md:items-center gap-4">
+      {/* [수정] 선택되면 내용 살짝 흐리게 (버튼 집중) */}
+      <div className={`flex flex-col md:flex-row md:items-center gap-4 transition-opacity duration-200 ${isSelected ? 'opacity-40 blur-[1px]' : 'opacity-100'}`}>
+        
+        {/* 모바일 헤더 (날짜만 표시, 버튼 삭제됨) */}
         <div className="flex justify-between items-center md:hidden">
           <span className="text-xs text-zinc-400">{record.openDate.split('T')[0]}</span>
-          <div className="flex gap-2">
-             <button onClick={() => onEdit(record)} className="text-zinc-400"><Icons.Edit size={14} /></button>
-             <button onClick={() => onDelete(record)} className="text-zinc-400"><Icons.Delete size={14} /></button>
-          </div>
         </div>
 
+        {/* 왼쪽: 종목 정보 */}
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1">
             <div className={`w-5 h-5 rounded flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${record.position === 'Long' ? 'bg-green-100 text-green-600' : 'bg-rose-100 text-rose-600'}`}>
@@ -1060,6 +1074,7 @@ function HistoryRow({ record, onEdit, onDelete, HighlightText, searchTerm, Icons
           {record.exitMemo && <div className="text-[11px] text-zinc-400 truncate pl-7">💬 {record.exitMemo}</div>}
         </div>
 
+        {/* 오른쪽: 수익 정보 */}
         <div className="flex justify-between md:justify-end items-center gap-6 md:w-1/2 pl-9 md:pl-0">
           <div className="text-right">
             <div className="text-[10px] text-zinc-400 font-bold mb-0.5">PNL %</div>
