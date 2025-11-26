@@ -1316,7 +1316,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
   );
 }
 
-// [수정] 흰색 배경과 연한 테두리 적용
+// [수정] 흰색 배경과 연한 테두리 적용된 입력 컴포넌트
 function FormInput({ label, ...props }: any) {
   return (
     <div>
@@ -1329,7 +1329,7 @@ function FormInput({ label, ...props }: any) {
   );
 }
 
-// [수정] 흰색 배경 적용
+// [수정] 흰색 배경 적용된 선택 컴포넌트
 function CustomSelect({ label, value, onChange, options, placeholder, name, icon: Icon }: any) {
   return (
     <div>
@@ -1340,55 +1340,6 @@ function CustomSelect({ label, value, onChange, options, placeholder, name, icon
           value={value}
           onChange={onChange}
           className="w-full bg-white rounded-xl px-4 py-3 pr-10 text-sm font-bold text-zinc-700 outline-none border border-zinc-200 focus:border-rose-300 transition-colors appearance-none cursor-pointer"
-        >
-          {placeholder && <option value="" disabled>{placeholder}</option>}
-          {options.map((opt: any) => {
-            const val = typeof opt === 'object' ? (opt.name || opt.title) : opt;
-            const text = typeof opt === 'object' ? (opt.name || opt.title) : opt;
-            const key = typeof opt === 'object' ? (opt.id || opt.name || opt.title) : opt;
-            return <option key={key} value={val}>{text}</option>;
-          })}
-        </select>
-        
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400">
-          {Icon ? <Icon size={16} /> : <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>}
-        </div>
-      </div>
-    </div>
-  );
-}
-function SidebarItem({ icon, label, active, onClick }: any) {
-  return (
-    <button 
-      onClick={onClick}
-      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${active ? `${APP_CONFIG.theme.secondaryBg} ${APP_CONFIG.theme.accent} font-bold` : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700'}`}
-    >
-      {icon}
-      <span className="text-sm">{label}</span>
-    </button>
-  );
-}
-
-function NavButton({ icon, label, active, onClick }: any) {
-  return (
-    <button onClick={onClick} className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${active ? APP_CONFIG.theme.accent : 'text-zinc-400'}`}>
-      {icon}
-      <span className="text-[10px] font-medium">{label}</span>
-    </button>
-  );
-}
-
-
-function CustomSelect({ label, value, onChange, options, placeholder, name, icon: Icon }: any) {
-  return (
-    <div>
-      {label && <label className="block text-xs font-bold text-zinc-500 mb-1">{label}</label>}
-      <div className="relative w-full">
-        <select
-          name={name}
-          value={value}
-          onChange={onChange}
-          className="w-full bg-zinc-50 rounded-xl px-4 py-3 pr-10 text-sm font-bold text-zinc-700 outline-none border border-transparent focus:bg-white focus:border-rose-300 transition-colors appearance-none cursor-pointer"
         >
           {placeholder && <option value="" disabled>{placeholder}</option>}
           {options.map((opt: any) => {
