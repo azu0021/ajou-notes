@@ -8,6 +8,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAnalytics } from 'firebase/analytics';
+import { createPortal } from 'react-dom';
 import {
   getAuth,
   GoogleAuthProvider,
@@ -1018,15 +1019,18 @@ function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons 
   );
 }
 
-// [수정] 청산(-100% 이하) 로직 적용 및 레이아웃 개선
+// [수정] 청산(LIQ) + 고수익(50%, 100%) 뱃지 추가
 function HistoryRow({ record, onEdit, onDelete, HighlightText, searchTerm, Icons }: any) {
-  // --- 청산(Liquidation) 로직 ---
-  const isLiquidation = record.pnl <= -100;
+  // --- 청산 & 고수익 로직 ---
+  const pnl = parseFloat(record.pnl);
+  const isLiquidation = pnl <= -100;
+  const isMegaWin = pnl >= 100; // 100% 이상
+  const isBigWin = pnl >= 50 && pnl < 100; // 50% 이상 ~ 100% 미만
   
-  // 1. 수익률 표시: 청산이면 무조건 -100%, 아니면 원래 수익률
-  const displayPnl = isLiquidation ? -100 : record.pnl;
+  // 1. 수익률 표시: 청산이면 무조건 -100%
+  const displayPnl = isLiquidation ? -100 : pnl;
   
-  // 2. 순수익 표시: 청산이면 -(증거금 + 수수료), 아니면 원래 순수익
+  // 2. 순수익 표시
   const displayNetProfit = isLiquidation 
     ? -1 * (Number(record.margin) + Number(record.fees)) 
     : record.realizedPnlValue;
@@ -1046,9 +1050,9 @@ function HistoryRow({ record, onEdit, onDelete, HighlightText, searchTerm, Icons
 
       {/* 왼쪽: 종목 정보 */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-3 mb-2">
+        <div className="flex items-center gap-3 mb-2 flex-wrap">
           {/* 포지션 뱃지 (L/S) */}
-          <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold ${record.position === 'Long' ? 'bg-green-100 text-green-600' : 'bg-rose-100 text-rose-600'}`}>
+          <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0 ${record.position === 'Long' ? 'bg-green-100 text-green-600' : 'bg-rose-100 text-rose-600'}`}>
             {record.position.charAt(0)}
           </div>
           
@@ -1057,10 +1061,27 @@ function HistoryRow({ record, onEdit, onDelete, HighlightText, searchTerm, Icons
             <HighlightText text={record.symbol} highlight={searchTerm} />
           </h4>
 
-          {/* 청산 뱃지 (청산 당했을 때만 표시) */}
+          {/* 🔥 [추가] 뱃지 영역 시작 */}
+          
+          {/* 1. 청산 뱃지 */}
           {isLiquidation && (
-            <span className="bg-zinc-800 text-white text-[10px] px-1.5 py-0.5 rounded font-bold">LIQ</span>
+            <span className="bg-zinc-500 text-white text-[10px] px-2 py-0.5 rounded font-bold flex-shrink-0">LIQ 🤮</span>
           )}
+
+          {/* 2. 100% 이상 로켓 뱃지 */}
+          {isMegaWin && (
+            <span className="bg-gradient-to-r from-green-400 to-emerald-600 text-white text-[10px] px-2 py-0.5 rounded font-bold shadow-sm flex-shrink-0">
+              100%+ 🚀
+            </span>
+          )}
+
+          {/* 3. 50% 이상 불꽃 뱃지 */}
+          {isBigWin && (
+            <span className="bg-green-500 text-white text-[10px] px-2 py-0.5 rounded font-bold flex-shrink-0">
+              50%+ 🔥
+            </span>
+          )}
+          {/* 뱃지 영역 끝 */}
 
           {/* 전략 태그 */}
           <span className="bg-zinc-50 text-zinc-400 text-[11px] px-2 py-0.5 rounded-md font-medium truncate max-w-[100px]">
@@ -1515,6 +1536,7 @@ function DeleteConfirmModal({ target, onClose, onConfirm, Icons }: any) {
 }
 
 // [최종] 아이콘 삭제됨 + 화살표 디자인 개선 + 방향 조절 가능
+// [최종_수정] 포탈(Portal) 기술 적용: 달력을 body로 꺼내서 위치 버그 및 잘림 해결
 const PinkDatePicker = ({ label, selected, onChange, placement = "bottom-start" }: any) => {
   return (
     <div className="w-full">
@@ -1535,9 +1557,12 @@ const PinkDatePicker = ({ label, selected, onChange, placement = "bottom-start" 
           dateFormat="yyyy. MM. dd. aa h:mm" 
           locale={ko} 
           timeCaption="시간"
+          // ▼ [핵심] 달력 방향 설정
           popperPlacement={placement}
-          popperProps={{
-            strategy: "fixed",
+          // ▼ [핵심] 달력을 모달 밖(body)으로 꺼내서 그리는 '포탈' 기능 (위치 버그 해결사!)
+          popperContainer={({ children }) => {
+            if (typeof window === 'undefined') return null;
+            return createPortal(children, document.body);
           }}
           popperModifiers={[
             {
@@ -1545,7 +1570,7 @@ const PinkDatePicker = ({ label, selected, onChange, placement = "bottom-start" 
               options: { offset: [0, 8] },
             },
             {
-              name: "preventOverflow",
+              name: "preventOverflow", // 화면 밖으로 나가는 것 방지
               options: {
                 rootBoundary: "viewport",
                 tether: false,
@@ -1561,6 +1586,7 @@ const PinkDatePicker = ({ label, selected, onChange, placement = "bottom-start" 
       </div>
       
       <style jsx global>{`
+        /* 전체 컨테이너 */
         .custom-datepicker-calendar {
           border: none !important;
           box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
@@ -1569,9 +1595,10 @@ const PinkDatePicker = ({ label, selected, onChange, placement = "bottom-start" 
           overflow: hidden;
           display: flex !important;
           background-color: white;
-          z-index: 9999 !important;
+          z-index: 9999 !important; /* 제일 위에 뜨게 함 */
         }
 
+        /* 달력 영역 */
         .react-datepicker__month-container {
           float: left;
           width: 240px;
@@ -1586,6 +1613,7 @@ const PinkDatePicker = ({ label, selected, onChange, placement = "bottom-start" 
           position: relative;
         }
         
+        /* 화살표 버튼 */
         .react-datepicker__navigation {
           top: 14px !important;
           width: 26px !important;
@@ -1600,6 +1628,7 @@ const PinkDatePicker = ({ label, selected, onChange, placement = "bottom-start" 
         .react-datepicker__navigation--previous { left: 10px !important; }
         .react-datepicker__navigation--next { right: 100px !important; }
 
+        /* 화살표 아이콘 (진한 핑크) */
         .react-datepicker__navigation-icon::before {
           border-color: #fb7185 !important;
           border-width: 2px 2px 0 0 !important;
@@ -1610,6 +1639,7 @@ const PinkDatePicker = ({ label, selected, onChange, placement = "bottom-start" 
         .react-datepicker__navigation--previous .react-datepicker__navigation-icon::before { left: -1px !important; }
         .react-datepicker__navigation--next .react-datepicker__navigation-icon::before { left: -2px !important; }
 
+        /* 텍스트 스타일 */
         .react-datepicker__current-month {
           color: #fb7185 !important;
           font-weight: 800 !important;
@@ -1624,6 +1654,7 @@ const PinkDatePicker = ({ label, selected, onChange, placement = "bottom-start" 
         }
         .react-datepicker__day:hover { border-radius: 50% !important; }
 
+        /* 시간 영역 */
         .react-datepicker__time-container {
           width: 90px !important;
           border-left: none !important;
