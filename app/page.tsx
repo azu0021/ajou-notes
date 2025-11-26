@@ -8,54 +8,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAnalytics } from 'firebase/analytics';
-import type { ChangeEvent } from "react";
-
-// ⬇⬇⬇ 이거 추가
-import { loadNote, saveNote } from "@/lib/noteApi";
-// ⬆⬆⬆
-
-  // Supabase 연동 상태
-  const [value, setValue] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-
-  // 노트 로딩
-  useEffect(() => {
-    (async () => {
-      const content = await loadNote();
-      setValue(content);
-      setLoading(false);
-    })();
-  }, []);
-
-  // 노트 저장
-
- async function handleChange(e: ChangeEvent<HTMLTextAreaElement>) {
-  const newValue = e.target.value;
-  setValue(newValue);
-
-  setSaving(true);
-  await saveNote(newValue);
-  setSaving(false);
-}
-  if (loading) return <div>불러오는 중...</div>;
-
-  return (
-    <main>
-      <textarea
-        style={{ width: "100%", height: 400 }}
-        value={value}
-        onChange={handleChange}
-      />
-      <div style={{ opacity: 0.6 }}>
-        {saving ? "저장 중..." : "저장됨"}
-      </div>
-    </main>
-  );
-}
-
-
-
 import {
   getAuth,
   signInAnonymously,
