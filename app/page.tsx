@@ -1281,15 +1281,11 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
           <div className="space-y-4">
              <div className="flex justify-between items-center">
                <span className="text-sm font-bold text-zinc-700">청산 정보 (선택)</span>
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                 <input 
-                   type="checkbox" 
-                   checked={formData.status === 'Closed'} 
-                   onChange={handleStatusChange} 
-                   className="w-5 h-5 rounded text-rose-500 focus:ring-rose-400 accent-rose-500 cursor-pointer"
-                 />
-                 <span className={`text-xs ${formData.status === 'Closed' ? 'text-rose-500 font-bold' : 'text-zinc-500'}`}>포지션 종료됨</span>
-               </label>
+               <PinkCheckbox 
+                 checked={formData.status === 'Closed'} 
+                 onChange={handleStatusChange}
+                 label="포지션 종료됨"
+               />
              </div>
              
              {formData.status === 'Closed' && (
@@ -1438,23 +1434,120 @@ const PinkDatePicker = ({ label, selected, onChange }: any) => {
           dateFormat="yyyy. MM. dd. aa h:mm" 
           locale={ko} 
           timeCaption="시간"
+          // ▼ [핵심] 달력 위치 자동 조정 및 포탈 사용 (모달 밖으로 안 잘리게)
+          popperPlacement="bottom-start"
+          popperModifiers={[
+            {
+              name: "offset",
+              options: {
+                offset: [0, 8], // 간격 조정
+              },
+            },
+            {
+              name: "preventOverflow", // 화면 밖으로 나가는 것 방지
+              options: {
+                rootBoundary: "viewport",
+                tether: false,
+                altAxis: true,
+              },
+            },
+          ]}
           className="w-full p-2.5 bg-white rounded-xl border border-zinc-200 focus:border-rose-300 focus:outline-none text-sm font-bold text-zinc-700 cursor-pointer"
           placeholderText="날짜를 선택하세요"
-          calendarClassName="!border-0 !shadow-xl !rounded-2xl !font-sans overflow-hidden"
+          calendarClassName="custom-datepicker-calendar" // 클래스 이름 변경
           dayClassName={(date) => "hover:!bg-rose-100 !rounded-full"}
         />
         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-rose-300">
            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
         </div>
       </div>
+      {/* 스타일 대폭 수정: 깨짐 방지 및 너비 확보 */}
       <style jsx global>{`
-        .react-datepicker__header { background-color: #fff0f3 !important; border-bottom: none !important; }
-        .react-datepicker__current-month, .react-datepicker-time__header { color: #fb7185 !important; font-weight: 800 !important; }
-        .react-datepicker__day--selected, .react-datepicker__day--keyboard-selected { background-color: #fb7185 !important; border-radius: 50% !important; }
-        .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list li.react-datepicker__time-list-item--selected { background-color: #fb7185 !important; }
-        .react-datepicker__day-name { color: #fda4af !important; font-weight: bold; }
+        .custom-datepicker-calendar {
+          border: none !important;
+          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+          border-radius: 16px !important;
+          font-family: inherit !important;
+          overflow: hidden;
+          display: flex !important; /* 시간 컬럼과 달력을 가로로 배치 */
+        }
+        .react-datepicker__header {
+          background-color: #fff0f3 !important;
+          border-bottom: 1px solid #fecdd3 !important;
+          padding-top: 12px !important;
+        }
+        .react-datepicker__triangle { display: none !important; } /* 꼬다리 제거 (위치 깨짐 원인) */
+        .react-datepicker__month-container { float: left; }
+        .react-datepicker__current-month, .react-datepicker-time__header {
+          color: #fb7185 !important;
+          font-weight: 800 !important;
+          font-size: 0.95rem !important;
+        }
+        .react-datepicker__day--selected, .react-datepicker__day--keyboard-selected {
+          background-color: #fb7185 !important;
+          color: white !important;
+          border-radius: 50% !important;
+        }
+        /* 시간 선택 영역 디자인 수정 */
+        .react-datepicker__time-container {
+          border-left: 1px solid #fecdd3 !important;
+          width: 90px !important; /* 너비 고정 */
+        }
+        .react-datepicker__time-container .react-datepicker__time {
+          background: white !important;
+        }
+        .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box {
+          width: 100% !important;
+        }
+        .react-datepicker__time-list-item {
+          height: auto !important;
+          padding: 8px 0 !important;
+          font-size: 0.85rem !important;
+        }
+        .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list li.react-datepicker__time-list-item--selected {
+          background-color: #fb7185 !important;
+          color: white !important;
+          font-weight: bold !important;
+        }
+        .react-datepicker__day-name { color: #fda4af !important; font-weight: bold; margin: 0.3rem !important; }
+        .react-datepicker__day { margin: 0.3rem !important; }
         .react-datepicker-popper { z-index: 9999 !important; }
       `}</style>
     </div>
   );
 };
+// [추가] 체크 표시가 '흰색'인 예쁜 체크박스
+function PinkCheckbox({ checked, onChange, label }: any) {
+  return (
+    <label className="flex items-center gap-2 cursor-pointer select-none group">
+      <div className="relative">
+        <input 
+          type="checkbox" 
+          checked={checked} 
+          onChange={onChange}
+          className="peer sr-only" // 실제 체크박스는 숨김
+        />
+        <div className={`w-5 h-5 rounded-md border transition-all flex items-center justify-center
+          ${checked 
+            ? 'bg-rose-500 border-rose-500 shadow-sm shadow-rose-200' 
+            : 'bg-white border-zinc-300 hover:border-rose-300'
+          }`}
+        >
+          {/* 체크되었을 때만 보이는 흰색 아이콘 */}
+          <svg 
+            className={`w-3.5 h-3.5 text-white transition-transform ${checked ? 'scale-100' : 'scale-0'}`} 
+            fill="none" 
+            viewBox="0 0 24 24" 
+            stroke="currentColor" 
+            strokeWidth="3.5"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+          </svg>
+        </div>
+      </div>
+      <span className={`text-xs font-bold transition-colors ${checked ? 'text-rose-500' : 'text-zinc-500 group-hover:text-zinc-600'}`}>
+        {label}
+      </span>
+    </label>
+  );
+}
