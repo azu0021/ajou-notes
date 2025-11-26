@@ -561,7 +561,7 @@ function DashboardView({
         
         {openPositions.length === 0 ? (
           <div className="bg-white border border-dashed border-zinc-200 rounded-2xl p-8 text-center text-zinc-400 text-sm">
-            현재 보유 중인 포지션이 없어요 🕊️
+            현재 보유 중인 포지션이 없어요
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
