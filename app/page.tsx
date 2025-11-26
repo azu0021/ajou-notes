@@ -466,6 +466,7 @@ export default function VeryDailyLog() {
             HighlightText={HighlightText}
             Icons={Icons}
             userQuote={userQuote}
+            onLogout={handleLogout}
           />
         )}
         {activeTab === 'stats' && <StatsView records={records} Icons={Icons} />}
@@ -517,17 +518,26 @@ export default function VeryDailyLog() {
 
 function DashboardView({ 
   openPositions, closedRecords, onAdd, onEdit, onDelete, 
-  searchTerm, setSearchTerm, selectedSymbol, setSelectedSymbol, uniqueSymbols, HighlightText, Icons, userQuote
+  searchTerm, setSearchTerm, selectedSymbol, setSelectedSymbol, uniqueSymbols, HighlightText, Icons, userQuote, onLogout // 👈 onLogout 받기
 }: any) {
   return (
     <div className="space-y-6 animate-fade-in-up">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
+        {/* [수정] 제목 영역을 가로로 넓히고(w-full), 양끝 정렬(justify-between)해서 로그아웃 버튼 배치 */}
+        <div className="w-full md:w-auto flex justify-between items-start">
           <div className="flex flex-col">
             <h1 className="text-5xl font-bold text-zinc-600 mb-2">😎</h1>
             <p className={`${APP_CONFIG.theme.accent} text-sm font-medium`}>{userQuote}</p>
           </div>
+          
+          {/* 🔥 [추가] 모바일 전용 로그아웃 버튼 (PC에선 숨김) */}
+          <button 
+            onClick={onLogout}
+            className="md:hidden bg-white border border-zinc-200 text-zinc-400 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm active:scale-95 transition-transform"
+          >
+            로그아웃
+          </button>
         </div>
         
         {/* 검색창 영역 */}
@@ -1078,14 +1088,14 @@ function HistoryRow({ record, onEdit, onDelete, HighlightText, searchTerm, Icons
         <div className="flex justify-between md:justify-end items-center gap-6 md:w-1/2 pl-9 md:pl-0">
           <div className="text-right">
             <div className="text-[10px] text-zinc-400 font-bold mb-0.5">PNL %</div>
-            <div className={`text-lg font-bold font-mono leading-none ${isProfit ? 'text-green-500' : 'text-rose-400'}`}>
+            <div className={`text-lg font-bold font-mono leading-none ${isProfit ? 'text-rose-400' : 'text-zinc-400'}`}>
               {displayPnl > 0 ? '+' : ''}{displayPnl}%
             </div>
           </div>
           
           <div className="text-right w-24">
             <div className="text-[10px] text-zinc-400 font-bold mb-0.5">순수익(USDT)</div>
-            <div className={`text-lg font-bold font-mono leading-none ${isProfit ? 'text-green-500' : 'text-rose-400'}`}>
+            <div className={`text-lg font-bold font-mono leading-none ${isProfit ? 'text-rose-400' : 'text-zinc-400'}`}>
               {formatNumber(displayNetProfit)}
             </div>
           </div>
