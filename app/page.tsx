@@ -987,19 +987,26 @@ function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons 
           )}
         </div>
 
-        <div className="flex items-baseline gap-5">
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-zinc-400 text-xs font-bold">진입가</span>
-            <span className="font-mono text-lg font-bold text-zinc-700 tracking-tight">
+        <div className="flex items-end gap-5">
+          <div className="flex items-baseline gap-1">
+            <span className="text-zinc-400 text-xs font-bold transform translate-y-[-2px]">진입가</span>
+            <span className="font-mono text-xl font-bold text-zinc-700 leading-none">
               {formatNumber(record.entryPrice)}
             </span>
           </div>
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-zinc-300 text-xs font-medium">증거금</span>
-            <span className="font-mono text-lg font-bold text-zinc-700 tracking-tight">
+          <div className="flex items-baseline gap-1">
+            <span className="text-zinc-400 text-xs font-bold transform translate-y-[-2px]">증거금</span>
+            <span className="font-mono text-xl font-bold text-zinc-700 leading-none">
               ${formatNumber(record.margin)}
             </span>
           </div>
+        </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
         </div>
       </div>
     </div>
@@ -1299,15 +1306,9 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                     />
                  </div>
                  <div className="grid grid-cols-2 gap-4">
-                   <FormInput label="청산가" name="closePrice" type="number" step="any" value={formData.closePrice} onChange={handleChange} placeholder="입력시 자동 계산" />
-                   {/* ▼ [수정] placement="bottom-end" 추가 (달력이 왼쪽으로 열림) */}
-                   <PinkDatePicker 
-                     label="청산 시간" 
-                     selected={formData.closeDate} 
-                     onChange={(val: string) => handleChange({ target: { name: 'closeDate', value: val } })}
-                     placement="bottom-end" 
-                   />
-                 </div>
+                   <FormInput label="청산가" name="closePrice" ... />
+                   <PinkDatePicker label="청산 시간" selected={formData.closeDate} onChange={(val: string) => handleChange({ target: { name: 'closeDate', value: val } })} placement="bottom-end" />
+</div>
                  
                  <div>
                    <label className="block text-xs font-bold text-zinc-500 mb-1">청산 기준</label>
@@ -1416,8 +1417,7 @@ function SidebarItem({ icon, label, active, onClick }: any) {
 
 
     
-// [수정] 아이콘 삭제, 화살표 위치 수정, 달력 열리는 방향(placement) 기능 추가
-// [수정] 원 배경 삭제 & 화살표만 남기기 (색상: 진한 핑크)
+// [최종_진짜_최종] 짤림 방지(fixed) + 아이콘 삭제 + 화살표 수정
 const PinkDatePicker = ({ label, selected, onChange, placement = "bottom-start" }: any) => {
   return (
     <div className="w-full">
@@ -1438,7 +1438,12 @@ const PinkDatePicker = ({ label, selected, onChange, placement = "bottom-start" 
           dateFormat="yyyy. MM. dd. aa h:mm" 
           locale={ko} 
           timeCaption="시간"
+          // ▼ [핵심] 방향 설정 (기본값: 왼쪽 정렬)
           popperPlacement={placement}
+          // ▼ [핵심] 이 부분이 "모달 밖으로 탈출해라"라는 명령어입니다!
+          popperProps={{
+            strategy: "fixed",
+          }}
           popperModifiers={[
             {
               name: "offset",
@@ -1447,7 +1452,7 @@ const PinkDatePicker = ({ label, selected, onChange, placement = "bottom-start" 
             {
               name: "preventOverflow",
               options: {
-                rootBoundary: "viewport",
+                rootBoundary: "viewport", // 화면 밖으로 나가는거 방지
                 tether: false,
                 altAxis: true,
               },
@@ -1470,16 +1475,15 @@ const PinkDatePicker = ({ label, selected, onChange, placement = "bottom-start" 
           overflow: hidden;
           display: flex !important;
           background-color: white;
+          z-index: 9999 !important; /* 제일 위에 뜨게 함 */
         }
 
-        /* 달력(왼쪽) 영역 */
         .react-datepicker__month-container {
           float: left;
           width: 240px;
           border-right: 1px solid #ffe4e6;
         }
 
-        /* 헤더 (연도/월) */
         .react-datepicker__header {
           background-color: #fff0f3 !important;
           border-bottom: 1px solid #ffe4e6 !important;
@@ -1488,12 +1492,11 @@ const PinkDatePicker = ({ label, selected, onChange, placement = "bottom-start" 
           position: relative;
         }
         
-        /* [수정] 화살표 버튼 컨테이너: 배경색 삭제 */
         .react-datepicker__navigation {
           top: 14px !important;
           width: 26px !important;
           height: 26px !important;
-          background-color: transparent !important; /* 배경 투명하게! */
+          background-color: transparent !important;
           border: none !important;
           display: flex;
           align-items: center;
@@ -1503,19 +1506,16 @@ const PinkDatePicker = ({ label, selected, onChange, placement = "bottom-start" 
         .react-datepicker__navigation--previous { left: 10px !important; }
         .react-datepicker__navigation--next { right: 100px !important; }
 
-        /* [수정] 화살표 아이콘 색상: 흰색 -> 진한 핑크 (#fb7185) */
-        /* 배경이 없어졌으므로 흰색이면 안 보여서 핑크로 변경했습니다 */
         .react-datepicker__navigation-icon::before {
-          border-color: #fb7185 !important; 
+          border-color: #fb7185 !important;
           border-width: 2px 2px 0 0 !important;
-          width: 8px !important; /* 크기 약간 키움 */
+          width: 8px !important;
           height: 8px !important;
           top: 9px !important;
         }
         .react-datepicker__navigation--previous .react-datepicker__navigation-icon::before { left: -1px !important; }
         .react-datepicker__navigation--next .react-datepicker__navigation-icon::before { left: -2px !important; }
 
-        /* 텍스트 스타일 */
         .react-datepicker__current-month {
           color: #fb7185 !important;
           font-weight: 800 !important;
@@ -1530,7 +1530,6 @@ const PinkDatePicker = ({ label, selected, onChange, placement = "bottom-start" 
         }
         .react-datepicker__day:hover { border-radius: 50% !important; }
 
-        /* 시간 영역 (오른쪽) */
         .react-datepicker__time-container {
           width: 90px !important;
           border-left: none !important;
