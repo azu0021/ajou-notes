@@ -14,9 +14,6 @@ import type { ChangeEvent } from "react";
 import { loadNote, saveNote } from "@/lib/noteApi";
 // ⬆⬆⬆
 
-// 페이지 컴포넌트
-export default function Page() {
-
   // Supabase 연동 상태
   const [value, setValue] = useState("");
   const [loading, setLoading] = useState(true);
