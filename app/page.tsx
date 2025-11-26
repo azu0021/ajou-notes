@@ -172,6 +172,7 @@ export default function VeryDailyLog() {
 useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
+      setLoading(false); // ✨ [이거 추가!] "확인 끝났으니 로딩 멈춰!"라고 알려주는 코드
     });
     return () => unsubscribe();
   }, []);
