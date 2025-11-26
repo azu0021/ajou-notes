@@ -995,7 +995,7 @@ function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons 
             </span>
           </div>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-zinc-300 text-xs font-medium">Margin</span>
+            <span className="text-zinc-300 text-xs font-medium">증거금</span>
             <span className="font-mono text-lg font-bold text-zinc-700 tracking-tight">
               ${formatNumber(record.margin)}
             </span>
@@ -1300,11 +1300,12 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                  </div>
                  <div className="grid grid-cols-2 gap-4">
                    <FormInput label="청산가" name="closePrice" type="number" step="any" value={formData.closePrice} onChange={handleChange} placeholder="입력시 자동 계산" />
-                   {/* 핑크색 달력 적용 */}
+                   {/* ▼ [수정] placement="bottom-end" 추가 (달력이 왼쪽으로 열림) */}
                    <PinkDatePicker 
                      label="청산 시간" 
                      selected={formData.closeDate} 
-                     onChange={(val: string) => handleChange({ target: { name: 'closeDate', value: val } })} 
+                     onChange={(val: string) => handleChange({ target: { name: 'closeDate', value: val } })}
+                     placement="bottom-end" 
                    />
                  </div>
                  
@@ -1415,8 +1416,9 @@ function SidebarItem({ icon, label, active, onClick }: any) {
 
 
     
-// [수정] 화살표 위치 완벽 수정 & 시간 영역 분리 디자인
-const PinkDatePicker = ({ label, selected, onChange }: any) => {
+// [수정] 아이콘 삭제, 화살표 위치 수정, 달력 열리는 방향(placement) 기능 추가
+// [수정] 원 배경 삭제 & 화살표만 남기기 (색상: 진한 핑크)
+const PinkDatePicker = ({ label, selected, onChange, placement = "bottom-start" }: any) => {
   return (
     <div className="w-full">
       <label className="block text-xs font-bold text-zinc-500 mb-1">{label}</label>
@@ -1436,7 +1438,7 @@ const PinkDatePicker = ({ label, selected, onChange }: any) => {
           dateFormat="yyyy. MM. dd. aa h:mm" 
           locale={ko} 
           timeCaption="시간"
-          popperPlacement="bottom-start"
+          popperPlacement={placement}
           popperModifiers={[
             {
               name: "offset",
@@ -1456,9 +1458,6 @@ const PinkDatePicker = ({ label, selected, onChange }: any) => {
           calendarClassName="custom-datepicker-calendar"
           dayClassName={(date) => "hover:!bg-rose-100 !rounded-full"}
         />
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-rose-300">
-           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
-        </div>
       </div>
       
       <style jsx global>{`
@@ -1473,14 +1472,14 @@ const PinkDatePicker = ({ label, selected, onChange }: any) => {
           background-color: white;
         }
 
-        /* [핵심] 달력(왼쪽) 영역 */
+        /* 달력(왼쪽) 영역 */
         .react-datepicker__month-container {
           float: left;
-          width: 240px; /* 너비 고정 */
-          border-right: 1px solid #ffe4e6; /* 시간 영역과 구분선 추가 */
+          width: 240px;
+          border-right: 1px solid #ffe4e6;
         }
 
-        /* [핵심] 헤더 (연도/월) */
+        /* 헤더 (연도/월) */
         .react-datepicker__header {
           background-color: #fff0f3 !important;
           border-bottom: 1px solid #ffe4e6 !important;
@@ -1489,28 +1488,28 @@ const PinkDatePicker = ({ label, selected, onChange }: any) => {
           position: relative;
         }
         
-        /* [수정] 화살표 위치 확실하게 잡기 */
+        /* [수정] 화살표 버튼 컨테이너: 배경색 삭제 */
         .react-datepicker__navigation {
           top: 14px !important;
           width: 26px !important;
           height: 26px !important;
-          background-color: #fb7185 !important;
-          border-radius: 50%;
+          background-color: transparent !important; /* 배경 투명하게! */
           border: none !important;
           display: flex;
           align-items: center;
           justify-content: center;
-          z-index: 10; /* 글자 위로 올라오게 */
+          z-index: 10;
         }
         .react-datepicker__navigation--previous { left: 10px !important; }
-        .react-datepicker__navigation--next { right: 10px !important; } /* 달력 안쪽으로 당김 */
+        .react-datepicker__navigation--next { right: 100px !important; }
 
-        /* 화살표 아이콘 (흰색) */
+        /* [수정] 화살표 아이콘 색상: 흰색 -> 진한 핑크 (#fb7185) */
+        /* 배경이 없어졌으므로 흰색이면 안 보여서 핑크로 변경했습니다 */
         .react-datepicker__navigation-icon::before {
-          border-color: #ffffff !important;
+          border-color: #fb7185 !important; 
           border-width: 2px 2px 0 0 !important;
-          width: 6px !important;
-          height: 6px !important;
+          width: 8px !important; /* 크기 약간 키움 */
+          height: 8px !important;
           top: 9px !important;
         }
         .react-datepicker__navigation--previous .react-datepicker__navigation-icon::before { left: -1px !important; }
@@ -1524,8 +1523,6 @@ const PinkDatePicker = ({ label, selected, onChange }: any) => {
         }
         .react-datepicker__day-name { color: #fda4af !important; font-weight: bold; width: 28px !important; line-height: 28px !important; margin: 2px !important; }
         .react-datepicker__day { width: 28px !important; line-height: 28px !important; margin: 2px !important; }
-        
-        /* 선택된 날짜 */
         .react-datepicker__day--selected, .react-datepicker__day--keyboard-selected {
           background-color: #fb7185 !important;
           color: white !important;
@@ -1538,7 +1535,6 @@ const PinkDatePicker = ({ label, selected, onChange }: any) => {
           width: 90px !important;
           border-left: none !important;
         }
-        /* 시간 헤더 ('시간' 텍스트) */
         .react-datepicker__time-container .react-datepicker__header {
           background-color: #fff0f3 !important;
           border-bottom: 1px solid #ffe4e6 !important;
@@ -1551,11 +1547,9 @@ const PinkDatePicker = ({ label, selected, onChange }: any) => {
           font-weight: 800 !important;
           font-size: 1rem !important;
         }
-        
-        /* 시간 리스트 스크롤 */
         .react-datepicker__time-container .react-datepicker__time {
           background: white !important;
-          height: 245px !important; /* 높이 맞춰서 잘림 방지 */
+          height: 245px !important;
         }
         .react-datepicker__time-list-item {
           height: 32px !important;
