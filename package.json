@@ -13,7 +13,6 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.84.0",
-    "@types/react-datepicker": "^7.0.0",
     "date-fns": "^4.1.0",
     "firebase": "^10.8.0",
     "lucide-react": "0.554.0",
