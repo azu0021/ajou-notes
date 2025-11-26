@@ -8,7 +8,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAnalytics } from 'firebase/analytics';
-
+import type { ChangeEvent } from "react";
 
 // ⬇⬇⬇ 이거 추가
 import { loadNote, saveNote } from "@/lib/noteApi";
@@ -32,15 +32,15 @@ export default function Page() {
   }, []);
 
   // 노트 저장
-  async function handleChange(e) {
-    const newValue = e.target.value;
-    setValue(newValue);
 
-    setSaving(true);
-    await saveNote(newValue);
-    setSaving(false);
-  }
+ async function handleChange(e: ChangeEvent<HTMLTextAreaElement>) {
+  const newValue = e.target.value;
+  setValue(newValue);
 
+  setSaving(true);
+  await saveNote(newValue);
+  setSaving(false);
+}
   if (loading) return <div>불러오는 중...</div>;
 
   return (
