@@ -1019,7 +1019,7 @@ function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons 
   );
 }
 
-// [수정] 청산(LIQ) + 고수익(50%, 100%) 뱃지 추가
+// [수정] 우측 여백 제거 + 수정/삭제 버튼 오버레이(Floating) 적용
 function HistoryRow({ record, onEdit, onDelete, HighlightText, searchTerm, Icons }: any) {
   // --- 청산 & 고수익 로직 ---
   const pnl = parseFloat(record.pnl);
@@ -1036,78 +1036,80 @@ function HistoryRow({ record, onEdit, onDelete, HighlightText, searchTerm, Icons
   const isProfit = displayPnl > 0;
 
   return (
-    <div className="bg-white p-5 rounded-2xl border border-zinc-100 hover:border-rose-200 transition-all flex flex-col md:flex-row md:items-center gap-4 group shadow-sm">
-      {/* 모바일 헤더 */}
-      <div className="flex justify-between items-center md:hidden">
-        <span className="text-xs text-zinc-400">{record.openDate.split('T')[0]}</span>
-        <div className="flex gap-2">
-           <button onClick={() => onEdit(record)} className="text-zinc-400"><Icons.Edit size={14} /></button>
-           <button onClick={() => onDelete(record)} className="text-zinc-400"><Icons.Delete size={14} /></button>
-        </div>
+    <div className="bg-white p-5 rounded-2xl border border-zinc-100 hover:border-rose-200 transition-all relative group shadow-sm">
+      
+      {/* 🔥 [NEW] 수정/삭제 버튼: 우측 상단에 둥둥 떠있게 수정 (공간 차지 X) */}
+      <div className="hidden md:flex absolute top-1/2 -translate-y-1/2 right-4 gap-1 opacity-0 group-hover:opacity-100 transition-all z-10 bg-white/90 backdrop-blur-sm p-1 rounded-xl shadow-sm border border-zinc-100">
+         <button 
+           onClick={(e) => {e.stopPropagation(); onEdit(record)}} 
+           className="p-2 hover:bg-rose-50 rounded-full text-zinc-400 hover:text-rose-400 transition-colors"
+         >
+           <Icons.Edit size={16} />
+         </button>
+         <button 
+           onClick={(e) => {e.stopPropagation(); onDelete(record)}} 
+           className="p-2 hover:bg-rose-50 rounded-full text-zinc-400 hover:text-rose-400 transition-colors"
+         >
+           <Icons.Delete size={16} />
+         </button>
       </div>
 
-      {/* 왼쪽: 종목 정보 (여기 상하 여백 및 정렬 수정됨) */}
-      <div className="flex-1 min-w-0">
-        {/* [수정] items-center로 높이 중앙 정렬, gap-x-2로 좌우 간격 좁힘, gap-y-1로 줄바꿈 시 간격 조절 */}
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1">
-          {/* 포지션 뱃지 (L/S) */}
-          <div className={`w-5 h-5 rounded flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${record.position === 'Long' ? 'bg-green-100 text-green-600' : 'bg-rose-100 text-rose-600'}`}>
-            {record.position.charAt(0)}
+      <div className="flex flex-col md:flex-row md:items-center gap-4">
+        {/* 모바일 헤더 (날짜 + 모바일용 버튼) */}
+        <div className="flex justify-between items-center md:hidden">
+          <span className="text-xs text-zinc-400">{record.openDate.split('T')[0]}</span>
+          <div className="flex gap-2">
+             <button onClick={() => onEdit(record)} className="text-zinc-400"><Icons.Edit size={14} /></button>
+             <button onClick={() => onDelete(record)} className="text-zinc-400"><Icons.Delete size={14} /></button>
+          </div>
+        </div>
+
+        {/* 왼쪽: 종목 정보 */}
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1">
+            {/* 포지션 뱃지 */}
+            <div className={`w-5 h-5 rounded flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${record.position === 'Long' ? 'bg-green-100 text-green-600' : 'bg-rose-100 text-rose-600'}`}>
+              {record.position.charAt(0)}
+            </div>
+            
+            {/* 종목명 */}
+            <h4 className="text-base font-bold text-zinc-700 truncate mr-1 leading-none">
+              <HighlightText text={record.symbol} highlight={searchTerm} />
+            </h4>
+
+            {/* 뱃지들 */}
+            {isLiquidation && <span className="bg-zinc-500 text-white text-[10px] px-1.5 py-0.5 rounded font-bold flex-shrink-0 leading-tight">LIQ 🤮</span>}
+            {isMegaWin && <span className="bg-gradient-to-r from-orange-300 to-purple-500 text-white text-[10px] px-1.5 py-0.5 rounded font-bold shadow-sm flex-shrink-0 leading-tight">100%🚀</span>}
+            {isBigWin && <span className="bg-lime-500 text-white text-[10px] px-1.5 py-0.5 rounded font-bold flex-shrink-0 leading-tight">50🔥</span>}
+
+            {/* 전략 태그 */}
+            <span className="bg-zinc-100 text-zinc-400 text-[10px] px-1.5 py-0.5 rounded font-medium truncate max-w-[100px] leading-tight">
+              <HighlightText text={record.strategy || '-'} highlight={searchTerm} />
+            </span>
+             {/* SL Hit 등 */}
+            {record.exitReason && <span className="bg-zinc-100 text-zinc-400 text-[10px] px-1.5 py-0.5 rounded font-medium leading-tight">{record.exitReason}</span>}
           </div>
           
-          {/* 종목명 (높이 맞춤) */}
-          <h4 className="text-base font-bold text-zinc-700 truncate mr-1 leading-none">
-            <HighlightText text={record.symbol} highlight={searchTerm} />
-          </h4>
-
-          {/* 뱃지들 (높이 일정하게 맞춤) */}
-          {isLiquidation && (
-            <span className="bg-zinc-500 text-white text-[10px] px-1.5 py-0.5 rounded font-bold flex-shrink-0 leading-tight">LIQ 🤮</span>
-          )}
-
-          {isMegaWin && (
-            <span className="bg-gradient-to-r from-orange-300 to-purple-500 text-white text-[10px] px-1.5 py-0.5 rounded font-bold shadow-sm flex-shrink-0 leading-tight">
-              100%🚀
-            </span>
-          )}
-
-          {isBigWin && (
-            <span className="bg-lime-500 text-white text-[10px] px-1.5 py-0.5 rounded font-bold flex-shrink-0 leading-tight">
-              50🔥
-            </span>
-          )}
-
-          {/* 전략 태그 */}
-          <span className="bg-zinc-100 text-zinc-400 text-[10px] px-1.5 py-0.5 rounded font-medium truncate max-w-[100px] leading-tight">
-            <HighlightText text={record.strategy || '-'} highlight={searchTerm} />
-          </span>
-           {/* SL Hit 등 결과 태그 */}
-          {record.exitReason && <span className="bg-zinc-100 text-zinc-400 text-[10px] px-1.5 py-0.5 rounded font-medium leading-tight">{record.exitReason}</span>}
+          {/* 하단 메모 */}
+          {record.exitMemo && <div className="text-[11px] text-zinc-400 truncate pl-7">💬 {record.exitMemo}</div>}
         </div>
-        
-        {/* 하단 메모 (상단 여백 줄임) */}
-        {record.exitMemo && <div className="text-[11px] text-zinc-400 truncate pl-7">💬 {record.exitMemo}</div>}
-      </div>
 
-      {/* 오른쪽: 수익 정보 */}
-      <div className="flex justify-between md:justify-end items-center gap-8 md:w-1/2 pl-9 md:pl-0">
-        <div className="text-right">
-          <div className="text-[10px] text-zinc-400 font-bold mb-0.5">PNL %</div>
-          <div className={`text-lg font-bold font-mono leading-none ${isProfit ? 'text-green-500' : 'text-rose-400'}`}>
-            {displayPnl > 0 ? '+' : ''}{displayPnl}%
+        {/* 오른쪽: 수익 정보 (버튼 영역 삭제하여 우측 밀착) */}
+        <div className="flex justify-between md:justify-end items-center gap-6 md:w-1/2 pl-9 md:pl-0">
+          <div className="text-right">
+            <div className="text-[10px] text-zinc-400 font-bold mb-0.5">PNL %</div>
+            <div className={`text-lg font-bold font-mono leading-none ${isProfit ? 'text-green-500' : 'text-rose-400'}`}>
+              {displayPnl > 0 ? '+' : ''}{displayPnl}%
+            </div>
           </div>
-        </div>
-        
-        <div className="text-right w-24">
-          <div className="text-[10px] text-zinc-400 font-bold mb-0.5">순수익(USDT)</div>
-          <div className={`text-lg font-bold font-mono leading-none ${isProfit ? 'text-green-500' : 'text-rose-400'}`}>
-            ${formatNumber(displayNetProfit)}
+          
+          {/* 오른쪽 끝에 딱 붙게 됨 */}
+          <div className="text-right w-24">
+            <div className="text-[10px] text-zinc-400 font-bold mb-0.5">순수익(USDT)</div>
+            <div className={`text-lg font-bold font-mono leading-none ${isProfit ? 'text-green-500' : 'text-rose-400'}`}>
+              {formatNumber(displayNetProfit)}
+            </div>
           </div>
-        </div>
-
-        <div className="hidden md:flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-           <button onClick={() => onEdit(record)} className="p-2 hover:bg-rose-50 rounded-full text-zinc-300 hover:text-rose-400 transition-colors"><Icons.Edit size={16} /></button>
-           <button onClick={() => onDelete(record)} className="p-2 hover:bg-rose-50 rounded-full text-zinc-300 hover:text-rose-400 transition-colors"><Icons.Delete size={16} /></button>
         </div>
       </div>
     </div>
