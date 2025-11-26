@@ -1213,14 +1213,22 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto custom-scrollbar">
-        <div className="sticky top-0 bg-white z-10 px-6 py-4 border-b border-zinc-200 flex justify-between items-center">
+    // [수정] 모바일: items-end (바닥 정렬), PC: items-center (중앙 정렬)
+    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center md:p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
+      
+      {/* [수정] 모바일: 둥근 모서리 위쪽만 + 높이조절(dvh) / PC: 전체 둥글게 */}
+      <div className="bg-white w-full md:w-full md:max-w-lg rounded-t-[32px] md:rounded-3xl shadow-2xl max-h-[90dvh] md:max-h-[85vh] overflow-y-auto custom-scrollbar relative flex flex-col">
+        
+        {/* 헤더: 스크롤해도 상단에 고정 */}
+        <div className="sticky top-0 bg-white z-20 px-6 py-5 border-b border-zinc-100 flex justify-between items-center shrink-0">
           <h3 className="font-bold text-xl text-zinc-700">{initialData ? '매매 기록 수정' : '새 매매 기록'}</h3>
-          <button onClick={onClose} className="p-2 hover:bg-zinc-100 rounded-full"><Icons.Close size={20} className="text-zinc-400"/></button>
+          <button onClick={onClose} className="p-2 hover:bg-zinc-100 rounded-full transition-colors">
+            <Icons.Close size={20} className="text-zinc-400"/>
+          </button>
         </div>
         
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        {/* 폼 내용 */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-5 pb-10">
           {/* Exchange & Symbol */}
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -1241,7 +1249,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                 value={formData.symbol}
                 onChange={(e) => setFormData({...formData, symbol: e.target.value.toUpperCase()})}
                 placeholder="BTC"
-                className="w-full p-2.5 bg-white rounded-xl border border-zinc-200 focus:border-rose-300 focus:outline-none text-sm font-bold uppercase transition-all"
+                className="w-full p-3 bg-white rounded-xl border border-zinc-200 focus:border-rose-300 focus:outline-none text-sm font-bold uppercase transition-all"
                 required
               />
               <datalist id="symbol-list">
@@ -1255,17 +1263,17 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
              <div className="w-1/2">
                 <label className="block text-xs font-bold text-zinc-500 mb-1">포지션</label>
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => setFormData({...formData, position: 'Long'})} className={`flex-1 py-2 rounded-xl text-sm font-bold transition-colors ${formData.position === 'Long' ? 'bg-green-100 text-green-600 ring-2 ring-green-200' : 'bg-white border border-zinc-200 text-zinc-400'}`}>Long</button>
-                  <button type="button" onClick={() => setFormData({...formData, position: 'Short'})} className={`flex-1 py-2 rounded-xl text-sm font-bold transition-colors ${formData.position === 'Short' ? 'bg-rose-100 text-rose-600 ring-2 ring-rose-200' : 'bg-white border border-zinc-200 text-zinc-400'}`}>Short</button>
+                  <button type="button" onClick={() => setFormData({...formData, position: 'Long'})} className={`flex-1 py-3 rounded-xl text-sm font-bold transition-colors ${formData.position === 'Long' ? 'bg-green-100 text-green-600 ring-2 ring-green-200' : 'bg-white border border-zinc-200 text-zinc-400'}`}>Long</button>
+                  <button type="button" onClick={() => setFormData({...formData, position: 'Short'})} className={`flex-1 py-3 rounded-xl text-sm font-bold transition-colors ${formData.position === 'Short' ? 'bg-rose-100 text-rose-600 ring-2 ring-rose-200' : 'bg-white border border-zinc-200 text-zinc-400'}`}>Short</button>
                 </div>
              </div>
              <div className="w-1/2">
-                <FormInput label="증거금 (Margin $)" name="margin" type="number" value={formData.margin} onChange={handleChange} placeholder="$" />
+                <FormInput label="증거금 (Margin USDT)" name="margin" type="number" value={formData.margin} onChange={handleChange} placeholder="USDT" />
              </div>
           </div>
 
           {/* Entry Info */}
-          <div className="bg-zinc-50 p-4 rounded-2xl space-y-3">
+          <div className="bg-zinc-50 p-5 rounded-2xl space-y-4 border border-zinc-100">
              <div className="flex justify-between items-center mb-1">
                 <span className="text-xs font-bold text-rose-400">진입 정보</span>
                 <ToggleSwitch 
@@ -1279,7 +1287,6 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                <FormInput label="레버리지 (x)" name="leverage" type="number" value={formData.leverage} onChange={handleChange} required />
              </div>
              
-             {/* 핑크색 달력 적용 (아이콘 없음) */}
              <PinkDatePicker 
                label="오픈 시간" 
                selected={formData.openDate} 
@@ -1302,16 +1309,15 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                     value={formData.entryMemo}
                     onChange={handleChange}
                     placeholder="진입 근거 및 시나리오..."
-                    className="w-full p-3 bg-white rounded-xl border border-rose-200 focus:border-rose-400 outline-none text-sm resize-none h-20 placeholder-zinc-300 transition-colors"
+                    className="w-full p-3 bg-white rounded-xl border border-rose-200 focus:border-rose-400 outline-none text-sm resize-none h-24 placeholder-zinc-300 transition-colors"
                   />
                </div>
              </div>
 
-             {/* 차트 이미지 첨부 영역 */}
              <div className="mt-2">
                 <label className="block text-xs font-bold text-zinc-500 mb-2">차트 스크린샷</label>
                 {!formData.chartImage ? (
-                  <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-zinc-300 rounded-xl cursor-pointer hover:bg-zinc-100 hover:border-rose-300 transition-colors bg-white">
+                  <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-zinc-300 rounded-xl cursor-pointer hover:bg-zinc-100 hover:border-rose-300 transition-colors bg-white">
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
                       <Icons.Chart className="w-6 h-6 text-zinc-400 mb-1" />
                       <p className="text-xs text-zinc-500">클릭하여 이미지 업로드</p>
@@ -1346,7 +1352,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
              </div>
              
              {formData.status === 'Closed' && (
-               <div className="animate-fade-in space-y-3 p-4 bg-zinc-50 rounded-2xl">
+               <div className="animate-fade-in space-y-4 p-5 bg-zinc-50 rounded-2xl border border-zinc-100">
                  <div className="flex justify-between items-center mb-1">
                     <span className="text-xs font-bold text-rose-400">청산 세부</span>
                     <ToggleSwitch 
@@ -1357,7 +1363,6 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                  </div>
                  <div className="grid grid-cols-2 gap-4">
                    <FormInput label="청산가" name="closePrice" type="number" step="any" value={formData.closePrice} onChange={handleChange} placeholder="입력시 자동 계산" />
-                   {/* 핑크색 달력 적용 (왼쪽으로 열림) */}
                    <PinkDatePicker 
                      label="청산 시간" 
                      selected={formData.closeDate} 
@@ -1374,7 +1379,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                          key={reason}
                          type="button" 
                          onClick={() => setFormData({...formData, exitReason: reason})}
-                         className={`px-3 py-1.5 rounded-lg text-xs transition-colors border ${formData.exitReason === reason ? 'bg-rose-400 text-white border-rose-400' : 'bg-white text-zinc-500 border-zinc-200 hover:border-rose-300'}`}
+                         className={`px-3 py-2 rounded-lg text-xs transition-colors border font-bold ${formData.exitReason === reason ? 'bg-rose-400 text-white border-rose-400' : 'bg-white text-zinc-500 border-zinc-200 hover:border-rose-300'}`}
                        >
                          {reason}
                        </button>
@@ -1386,14 +1391,14 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                    value={formData.exitMemo}
                    onChange={handleChange}
                    placeholder="매매 복기 및 배운 점..."
-                   className="w-full p-3 bg-white rounded-xl border border-rose-200 focus:border-rose-400 focus:outline-none text-sm resize-none h-20 placeholder-zinc-300"
+                   className="w-full p-3 bg-white rounded-xl border border-rose-200 focus:border-rose-400 focus:outline-none text-sm resize-none h-24 placeholder-zinc-300"
                  />
                </div>
              )}
           </div>
 
-          <div className="pt-2">
-            <button type="submit" className={`${APP_CONFIG.theme.primary} ${APP_CONFIG.theme.primaryHover} w-full text-white font-bold py-3.5 rounded-xl shadow-lg shadow-rose-200 transition-all active:scale-[0.98]`}>
+          <div className="pt-2 pb-safe">
+            <button type="submit" className={`${APP_CONFIG.theme.primary} ${APP_CONFIG.theme.primaryHover} w-full text-white font-bold py-4 rounded-xl shadow-lg shadow-rose-200 transition-all active:scale-[0.98] text-base`}>
               {initialData ? '수정 완료' : '기록 저장하기'}
             </button>
           </div>
@@ -1401,7 +1406,6 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
       </div>
     </div>
   );
-}
 
 function FormInput({ label, ...props }: any) {
   return (
