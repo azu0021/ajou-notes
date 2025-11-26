@@ -1,5 +1,10 @@
 'use client';
 
+/**
+ * ☝️ [중요] Next.js App Router에서 useState, useEffect 등을 쓰려면
+ * 반드시 파일 최상단에 'use client'; 가 있어야 해!
+ */
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAnalytics } from 'firebase/analytics';
@@ -25,7 +30,6 @@ import {
   serverTimestamp
 } from 'firebase/firestore';
 import {
-  LayoutDashboard,
   PieChart,
   BookOpen,
   Settings,
@@ -46,7 +50,7 @@ import {
   MessageSquareQuote,
   Image as ImageIcon,
 } from 'lucide-react';
-// 달력 라이브러리 추가
+// 달력 라이브러리
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { ko } from 'date-fns/locale';
@@ -531,7 +535,7 @@ export default function VeryDailyLog() {
 }
 
 // --- Sub Components ---
-// [수정] 헤더 동그라미 색상 통일 & 숫자 디자인 변경 (괄호 삭제, 핑크색 적용)
+
 function DashboardView({ 
   openPositions, closedRecords, onAdd, onEdit, onDelete, 
   searchTerm, setSearchTerm, selectedSymbol, setSelectedSymbol, uniqueSymbols, HighlightText, Icons, userQuote
@@ -1017,14 +1021,12 @@ function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons 
 // [수정] 청산(-100% 이하) 로직 적용 및 레이아웃 개선
 function HistoryRow({ record, onEdit, onDelete, HighlightText, searchTerm, Icons }: any) {
   // --- 청산(Liquidation) 로직 ---
-  // 수익률이 -100% 이하라면 '청산'으로 간주
   const isLiquidation = record.pnl <= -100;
   
   // 1. 수익률 표시: 청산이면 무조건 -100%, 아니면 원래 수익률
   const displayPnl = isLiquidation ? -100 : record.pnl;
   
   // 2. 순수익 표시: 청산이면 -(증거금 + 수수료), 아니면 원래 순수익
-  // (증거금과 수수료는 문자열일 수 있어서 Number로 변환 후 계산)
   const displayNetProfit = isLiquidation 
     ? -1 * (Number(record.margin) + Number(record.fees)) 
     : record.realizedPnlValue;
@@ -1097,6 +1099,7 @@ function HistoryRow({ record, onEdit, onDelete, HighlightText, searchTerm, Icons
     </div>
   );
 }
+
 function ToggleSwitch({ options, value, onChange }: { options: string[], value: string, onChange: (val: string) => void }) {
   return (
     <div className="bg-zinc-100 p-1 rounded-full flex items-center relative h-8 w-32">
@@ -1260,7 +1263,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                <FormInput label="레버리지 (x)" name="leverage" type="number" value={formData.leverage} onChange={handleChange} required />
              </div>
              
-             {/* 핑크색 달력 적용 */}
+             {/* 핑크색 달력 적용 (아이콘 없음) */}
              <PinkDatePicker 
                label="오픈 시간" 
                selected={formData.openDate} 
@@ -1337,9 +1340,15 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                     />
                  </div>
                  <div className="grid grid-cols-2 gap-4">
-                   <FormInput label="청산가" name="closePrice" ... />
-                   <PinkDatePicker label="청산 시간" selected={formData.closeDate} onChange={(val: string) => handleChange({ target: { name: 'closeDate', value: val } })} placement="bottom-end" />
-</div>
+                   <FormInput label="청산가" name="closePrice" type="number" step="any" value={formData.closePrice} onChange={handleChange} placeholder="입력시 자동 계산" />
+                   {/* 핑크색 달력 적용 (왼쪽으로 열림) */}
+                   <PinkDatePicker 
+                     label="청산 시간" 
+                     selected={formData.closeDate} 
+                     onChange={(val: string) => handleChange({ target: { name: 'closeDate', value: val } })} 
+                     placement="bottom-end"
+                   />
+                 </div>
                  
                  <div>
                    <label className="block text-xs font-bold text-zinc-500 mb-1">청산 기준</label>
@@ -1446,9 +1455,66 @@ function SidebarItem({ icon, label, active, onClick }: any) {
   );
 }
 
+function PinkCheckbox({ checked, onChange, label }: any) {
+  return (
+    <label className="flex items-center gap-2 cursor-pointer select-none group">
+      <div className="relative">
+        <input 
+          type="checkbox" 
+          checked={checked} 
+          onChange={onChange}
+          className="peer sr-only"
+        />
+        <div className={`w-5 h-5 rounded-md border transition-all flex items-center justify-center
+          ${checked 
+            ? 'bg-rose-500 border-rose-500 shadow-sm shadow-rose-200' 
+            : 'bg-white border-zinc-300 hover:border-rose-300'
+          }`}
+        >
+          <svg 
+            className={`w-3.5 h-3.5 text-white transition-transform ${checked ? 'scale-100' : 'scale-0'}`} 
+            fill="none" 
+            viewBox="0 0 24 24" 
+            stroke="currentColor" 
+            strokeWidth="3.5"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+          </svg>
+        </div>
+      </div>
+      <span className={`text-xs font-bold transition-colors ${checked ? 'text-rose-500' : 'text-zinc-500 group-hover:text-zinc-600'}`}>
+        {label}
+      </span>
+    </label>
+  );
+}
 
-    
-// [최종_진짜_최종] 짤림 방지(fixed) + 아이콘 삭제 + 화살표 수정
+function DeleteConfirmModal({ target, onClose, onConfirm, Icons }: any) {
+  if (!target) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm animate-fade-in">
+      <div className="bg-white rounded-3xl shadow-xl p-8 max-w-sm w-full text-center">
+        <div className="w-16 h-16 bg-rose-50 text-rose-400 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Icons.Delete size={32} />
+        </div>
+        <h3 className="font-bold text-xl text-zinc-700 mb-2">기록 삭제</h3>
+        <p className="text-zinc-500 text-sm mb-6">
+          정말로 이 매매 기록을 삭제하시겠습니까?<br/>삭제된 데이터는 복구할 수 없습니다.
+        </p>
+        <div className="flex gap-3">
+          <button onClick={onClose} className="flex-1 py-3 rounded-xl font-bold text-zinc-500 hover:bg-zinc-100 transition-colors">
+            취소
+          </button>
+          <button onClick={onConfirm} className="flex-1 py-3 rounded-xl font-bold bg-rose-400 text-white hover:bg-rose-500 transition-colors shadow-lg shadow-rose-200">
+            삭제하기
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// [최종] 아이콘 삭제됨 + 화살표 디자인 개선 + 방향 조절 가능
 const PinkDatePicker = ({ label, selected, onChange, placement = "bottom-start" }: any) => {
   return (
     <div className="w-full">
@@ -1469,9 +1535,7 @@ const PinkDatePicker = ({ label, selected, onChange, placement = "bottom-start" 
           dateFormat="yyyy. MM. dd. aa h:mm" 
           locale={ko} 
           timeCaption="시간"
-          // ▼ [핵심] 방향 설정 (기본값: 왼쪽 정렬)
           popperPlacement={placement}
-          // ▼ [핵심] 이 부분이 "모달 밖으로 탈출해라"라는 명령어입니다!
           popperProps={{
             strategy: "fixed",
           }}
@@ -1483,7 +1547,7 @@ const PinkDatePicker = ({ label, selected, onChange, placement = "bottom-start" 
             {
               name: "preventOverflow",
               options: {
-                rootBoundary: "viewport", // 화면 밖으로 나가는거 방지
+                rootBoundary: "viewport",
                 tether: false,
                 altAxis: true,
               },
@@ -1497,7 +1561,6 @@ const PinkDatePicker = ({ label, selected, onChange, placement = "bottom-start" 
       </div>
       
       <style jsx global>{`
-        /* 전체 컨테이너 */
         .custom-datepicker-calendar {
           border: none !important;
           box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
@@ -1506,7 +1569,7 @@ const PinkDatePicker = ({ label, selected, onChange, placement = "bottom-start" 
           overflow: hidden;
           display: flex !important;
           background-color: white;
-          z-index: 9999 !important; /* 제일 위에 뜨게 함 */
+          z-index: 9999 !important;
         }
 
         .react-datepicker__month-container {
@@ -1600,39 +1663,3 @@ const PinkDatePicker = ({ label, selected, onChange, placement = "bottom-start" 
     </div>
   );
 };
-
-// [추가] 체크 표시가 '흰색'인 예쁜 체크박스
-function PinkCheckbox({ checked, onChange, label }: any) {
-  return (
-    <label className="flex items-center gap-2 cursor-pointer select-none group">
-      <div className="relative">
-        <input 
-          type="checkbox" 
-          checked={checked} 
-          onChange={onChange}
-          className="peer sr-only" // 실제 체크박스는 숨김
-        />
-        <div className={`w-5 h-5 rounded-md border transition-all flex items-center justify-center
-          ${checked 
-            ? 'bg-rose-500 border-rose-500 shadow-sm shadow-rose-200' 
-            : 'bg-white border-zinc-300 hover:border-rose-300'
-          }`}
-        >
-          {/* 체크되었을 때만 보이는 흰색 아이콘 */}
-          <svg 
-            className={`w-3.5 h-3.5 text-white transition-transform ${checked ? 'scale-100' : 'scale-0'}`} 
-            fill="none" 
-            viewBox="0 0 24 24" 
-            stroke="currentColor" 
-            strokeWidth="3.5"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-          </svg>
-        </div>
-      </div>
-      <span className={`text-xs font-bold transition-colors ${checked ? 'text-rose-500' : 'text-zinc-500 group-hover:text-zinc-600'}`}>
-        {label}
-      </span>
-    </label>
-  );
-}
