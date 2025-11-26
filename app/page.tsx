@@ -1,21 +1,13 @@
 'use client';
 
-/**
- * ☝️ [중요] Next.js App Router에서 useState, useEffect 등을 쓰려면
- * 반드시 파일 최상단에 'use client'; 가 있어야 해!
- */
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAnalytics } from 'firebase/analytics';
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import { ko } from 'date-fns/locale';
 import {
   getAuth,
-  GoogleAuthProvider, // 추가됨
-  signInWithPopup,    // 추가됨
-  signOut,            // 추가됨
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut,
   onAuthStateChanged,
 } from 'firebase/auth';
 import {
@@ -32,7 +24,6 @@ import {
   getDoc,
   serverTimestamp
 } from 'firebase/firestore';
-// 1. 사용할 아이콘들을 모두 여기서 불러옵니다.
 import {
   LayoutDashboard,
   PieChart,
@@ -53,8 +44,12 @@ import {
   Coins,
   ArrowRightLeft,
   MessageSquareQuote,
-  Image,
+  Image as ImageIcon,
 } from 'lucide-react';
+// 달력 라이브러리 추가
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { ko } from 'date-fns/locale';
 
 /**
  * ------------------------------------------------------------------
@@ -84,7 +79,7 @@ const APP_CONFIG = {
     Delete: Trash2,
     Edit: Edit2,
     Close: X,
-    Chart: Image,
+    Chart: ImageIcon,
     Quote: MessageSquareQuote,
     Down: ChevronDown,
     Up: TrendingUp,
@@ -160,7 +155,6 @@ export default function VeryDailyLog() {
   const [userQuote, setUserQuote] = useState("기록이 쌓여 실력이 됩니다.");
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
-
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<any>(null);
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
@@ -171,16 +165,15 @@ export default function VeryDailyLog() {
   const Icons = APP_CONFIG.icons;
 
   // Auth Init
- 
-useEffect(() => {
+  useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
-      setLoading(false); // ✨ [이거 추가!] "확인 끝났으니 로딩 멈춰!"라고 알려주는 코드
+      setLoading(false); // 로딩 끝!
     });
     return () => unsubscribe();
   }, []);
 
-  // [추가] 구글 로그인 함수
+  // 구글 로그인 함수
   const handleLogin = async () => {
     try {
       const provider = new GoogleAuthProvider();
@@ -190,13 +183,11 @@ useEffect(() => {
     }
   };
 
-  // [추가] 로그아웃 함수
+  // 로그아웃 함수
   const handleLogout = () => {
     signOut(auth);
-    setRecords([]); // 로그아웃하면 화면 비우기
+    setRecords([]);
   };
-
-// ... Data Fetching useEffect ...
 
   // Data Fetching
   useEffect(() => {
@@ -217,7 +208,7 @@ useEffect(() => {
     return () => unsubscribe();
   }, [user]);
 
-  // Settings Fetching (거래소 & 문구 & 전략)
+  // Settings Fetching
   useEffect(() => {
     if (!user) return;
     const fetchSettings = async () => {
@@ -228,7 +219,7 @@ useEffect(() => {
           const data = docSnap.data();
           if (data.exchanges) setExchanges(data.exchanges);
           if (data.quote) setUserQuote(data.quote);
-          if (data.strategies) setStrategies(data.strategies); // [NEW] 전략 불러오기
+          if (data.strategies) setStrategies(data.strategies);
         }
       } catch (e) {
         console.error("Settings Error:", e);
@@ -249,7 +240,6 @@ useEffect(() => {
     }
   };
 
-  // [NEW] 전략 저장 함수
   const handleSaveStrategies = async (newStrategies: any[]) => {
     if (!user) return;
     try {
@@ -262,7 +252,6 @@ useEffect(() => {
     }
   };
 
-  // 문구 저장 함수
   const handleSaveQuote = async (newQuote: string) => {
     if (!user) return;
     try {
@@ -370,7 +359,7 @@ useEffect(() => {
     document.body.removeChild(link);
   };
 
-  const filteroseRecords = useMemo(() => {
+  const filteredRecords = useMemo(() => {
     let result = records;
     if (selectedSymbol !== 'ALL') {
       result = result.filter(r => r.symbol?.toUpperCase() === selectedSymbol);
@@ -387,8 +376,8 @@ useEffect(() => {
     return result;
   }, [records, searchTerm, selectedSymbol]);
 
-  const openPositions = filteroseRecords.filter(r => r.status === 'Open');
-  const closedRecords = filteroseRecords.filter(r => r.status === 'Closed');
+  const openPositions = filteredRecords.filter(r => r.status === 'Open');
+  const closedRecords = filteredRecords.filter(r => r.status === 'Closed');
 
   const HighlightText = ({ text, highlight }: { text: string, highlight: string }) => {
     if (!highlight || !text) return <span>{text}</span>;
@@ -404,8 +393,8 @@ useEffect(() => {
   };
 
   if (loading && !user) return <div className={`min-h-screen flex items-center justify-center ${APP_CONFIG.theme.secondaryBg} ${APP_CONFIG.theme.accent} animate-pulse font-sans`}>로딩중...</div>;
-
-// [추가] 로그인이 안 되어 있을 때 보여줄 로그인 화면
+  
+  // 로그인 화면
   if (!user) {
     return (
       <div className={`min-h-screen flex flex-col items-center justify-center ${APP_CONFIG.theme.secondaryBg} p-6`}>
@@ -423,7 +412,6 @@ useEffect(() => {
             onClick={handleLogin}
             className="w-full bg-white text-zinc-700 px-6 py-4 rounded-2xl border border-zinc-200 font-bold flex items-center justify-center gap-3 hover:bg-rose-50 hover:border-rose-200 hover:text-rose-500 transition-all active:scale-95 shadow-sm group"
           >
-            {/* 구글 아이콘 SVG */}
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
@@ -467,9 +455,13 @@ useEffect(() => {
           <SidebarItem icon={<Icons.Settings size={18}/>} label="환경 설정" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
         </nav>
         
-        <div className="pt-6 border-t border-zinc-200">
+        <div className="pt-6 border-t border-zinc-200 space-y-2">
            <button onClick={handleExportCSV} className="flex items-center gap-2 text-sm text-zinc-500 hover:text-rose-300 transition-colors w-full p-2 rounded-lg hover:bg-zinc-50">
              <Icons.Export size={16} /> 엑셀 다운로드
+           </button>
+           {/* 로그아웃 버튼 */}
+           <button onClick={handleLogout} className="flex items-center gap-2 text-sm text-zinc-400 hover:text-rose-400 transition-colors w-full p-2 rounded-lg hover:bg-zinc-50">
+             <Icons.Close size={16} /> 로그아웃
            </button>
         </div>
       </div>
@@ -497,7 +489,7 @@ useEffect(() => {
         {activeTab === 'strategies' && (
           <StrategiesView 
             strategies={strategies} 
-            onSave={handleSaveStrategies} // [NEW] 저장 함수 전달
+            onSave={handleSaveStrategies}
             Icons={Icons}
           />
         )}
@@ -574,8 +566,7 @@ function DashboardView({
       <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
         <button 
           onClick={() => setSelectedSymbol('ALL')}
-          className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${selectedSymbol === 'ALL' ?
-          'bg-zinc-700 text-white shadow-md' : 'bg-white text-zinc-500 hover:bg-zinc-50'}`}
+          className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${selectedSymbol === 'ALL' ? 'bg-zinc-700 text-white shadow-md' : 'bg-white text-zinc-500 hover:bg-zinc-50'}`}
         >
           ALL
         </button>
@@ -583,8 +574,7 @@ function DashboardView({
           <button 
             key={sym}
             onClick={() => setSelectedSymbol(sym)}
-            className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${selectedSymbol 
-            === sym ? 'bg-zinc-700 text-white shadow-md' : 'bg-white text-zinc-500 hover:bg-zinc-50'}`}
+            className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${selectedSymbol === sym ? 'bg-zinc-700 text-white shadow-md' : 'bg-white text-zinc-500 hover:bg-zinc-50'}`}
           >
             {sym}
           </button>
@@ -631,7 +621,6 @@ function DashboardView({
       {/* Closed Records */}
       <section>
         <details className="group" open={true}>
-          {/* [수정] 아래 summary 태그에 [&::-webkit-details-marker]:hidden 추가 (모바일 강제 화살표 제거) */}
           <summary className="list-none cursor-pointer mb-3 select-none [&::-webkit-details-marker]:hidden">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -838,8 +827,9 @@ function StatsView({ records, Icons }: any) {
   const total = closed.length;
   const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
   
-  const totalNetPnl = closed.roseuce((acc: number, cur: any) => acc + (parseFloat(cur.realizedPnlValue) || 0), 0);
-  const totalFees = closed.roseuce((acc: number, cur: any) => acc + (parseFloat(cur.fees) || 0), 0);
+  const totalNetPnl = closed.reduce((acc: number, cur: any) => acc + (parseFloat(cur.realizedPnlValue) || 0), 0);
+  const totalFees = closed.reduce((acc: number, cur: any) => acc + (parseFloat(cur.fees) || 0), 0);
+  
   return (
     <div className="space-y-6 animate-fade-in-up">
       <h2 className="text-2xl font-bold text-zinc-700 mb-6">성적표</h2>
@@ -856,7 +846,6 @@ function StatsView({ records, Icons }: any) {
   );
 }
 
-// [NEW] 전략 수정 및 삭제 기능이 추가된 컴포넌트
 function StrategiesView({ strategies, onSave, Icons }: any) {
   const [isAdding, setIsAdding] = useState(false);
   const [newStrat, setNewStrat] = useState({ title: '', description: '' });
@@ -888,7 +877,6 @@ function StrategiesView({ strategies, onSave, Icons }: any) {
         </button>
       </div>
 
-      {/* 전략 추가 폼 */}
       {isAdding && (
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-rose-100 animate-fade-in">
           <h3 className="text-sm font-bold text-zinc-700 mb-3">새로운 전략 작성</h3>
@@ -919,7 +907,6 @@ function StrategiesView({ strategies, onSave, Icons }: any) {
         </div>
       )}
 
-      {/* 전략 리스트 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {strategies.map((s: any) => (
           <div key={s.id} className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-100 hover:border-rose-200 transition-all group relative">
@@ -951,19 +938,17 @@ function StatCard({ label, value, icon, color }: any) {
 }
 
 function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons }: any) {
-  const [isSelected, setIsSelected] = useState(false); // 선택 상태 관리
+  const [isSelected, setIsSelected] = useState(false);
   const isLong = record.position === 'Long';
-
   return (
     <div 
-      onClick={() => setIsSelected(!isSelected)} // 클릭 시 선택 상태 토글
+      onClick={() => setIsSelected(!isSelected)}
       className={`relative rounded-3xl p-5 border transition-all duration-200 cursor-pointer select-none
         ${isSelected 
-          ? 'bg-rose-50 border-rose-200 shadow-inner' // 선택됐을 때: 연한 핑크 배경 + 테두리
-          : 'bg-white border-zinc-100 shadow-sm hover:shadow-md' // 평소: 흰 배경
+          ? 'bg-rose-50 border-rose-200 shadow-inner' 
+          : 'bg-white border-zinc-100 shadow-sm hover:shadow-md'
         }`}
     >
-      {/* 수정/삭제 버튼 오버레이 (선택되었을 때만 등장) */}
       {isSelected && (
         <div className="absolute top-1/2 right-4 -translate-y-1/2 flex gap-2 z-10 animate-fade-in">
            <button 
@@ -981,27 +966,20 @@ function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons 
         </div>
       )}
 
-      {/* 컨텐츠 영역 (선택되면 살짝 흐려지게 처리) */}
       <div className={`transition-opacity duration-200 ${isSelected ? 'opacity-40 blur-[1px]' : 'opacity-100'}`}>
-        
-        {/* 1. 날짜 (최상단) */}
         <div className="text-zinc-400 text-xs mb-1.5 font-medium">
           {record.openDate.split('T')[0]}
         </div>
 
-        {/* 2. 종목명 + 포지션 + 전략 (한 줄 배치) */}
         <div className="flex items-center gap-2 mb-5 flex-wrap">
-          {/* 종목명 */}
           <h3 className="text-2xl font-bold text-zinc-700 leading-none">
             <HighlightText text={record.symbol} highlight={searchTerm} />
           </h3>
 
-          {/* 포지션 뱃지 */}
           <span className={`px-2 py-1 rounded-lg text-[11px] font-bold tracking-tight whitespace-nowrap ${isLong ? 'bg-green-400 text-white' : 'bg-rose-400 text-white'}`}>
             {record.position.toUpperCase()} x{record.leverage}
           </span>
 
-          {/* 전략 뱃지 */}
           {record.strategy && (
              <span className="bg-zinc-100 text-rose-400 px-2 py-1 rounded-lg text-[11px] font-bold tracking-tight whitespace-nowrap truncate max-w-[100px]">
                <HighlightText text={record.strategy} highlight={searchTerm} />
@@ -1009,7 +987,6 @@ function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons 
           )}
         </div>
 
-        {/* 3. 진입가 & 마진 데이터 */}
         <div className="flex items-baseline gap-5">
           <div className="flex items-baseline gap-1.5">
             <span className="text-zinc-400 text-xs font-bold">진입가</span>
@@ -1024,7 +1001,6 @@ function TradeCard({ record, onEdit, onDelete, HighlightText, searchTerm, Icons 
             </span>
           </div>
         </div>
-
       </div>
     </div>
   );
@@ -1083,7 +1059,6 @@ function HistoryRow({ record, onEdit, onDelete, HighlightText, searchTerm, Icons
   );
 }
 
-// [NEW] 커스텀 토글 컴포넌트
 function ToggleSwitch({ options, value, onChange }: { options: string[], value: string, onChange: (val: string) => void }) {
   return (
     <div className="bg-zinc-100 p-1 rounded-full flex items-center relative h-8 w-32">
@@ -1122,7 +1097,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
     strategy: strategies[0]?.title || '',
     entryMemo: '', 
     exitMemo: '',
-    chartImage: '', // [NEW] 이미지 저장용
+    chartImage: '', 
   });
 
   useEffect(() => {
@@ -1134,7 +1109,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
         exchange: initialData.exchange || exchanges[0]?.name,
         entryType: initialData.entryType || 'Maker',
         exitType: initialData.exitType || 'Taker',
-        chartImage: initialData.chartImage || '', // 이미지 데이터 불러오기
+        chartImage: initialData.chartImage || '',
       });
     }
   }, [initialData]);
@@ -1153,7 +1128,6 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
     });
   };
 
-  // [NEW] 이미지 파일 처리 함수
   const handleImageChange = (e: any) => {
     const file = e.target.files[0];
     if (file) {
@@ -1180,6 +1154,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
   };
 
   if (!isOpen) return null;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm animate-fade-in">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto custom-scrollbar">
@@ -1210,7 +1185,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                 onChange={(e) => setFormData({...formData, symbol: e.target.value.toUpperCase()})}
                 placeholder="BTC"
                 className="w-full p-2.5 bg-white rounded-xl border border-zinc-200 focus:border-rose-300 focus:outline-none text-sm font-bold uppercase transition-all"
-                requirose
+                required
               />
               <datalist id="symbol-list">
                 {existingSymbols.map((sym: string) => <option key={sym} value={sym} />)}
@@ -1243,10 +1218,18 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                 />
              </div>
              <div className="grid grid-cols-2 gap-4">
-               <FormInput label="진입가" name="entryPrice" type="number" step="any" value={formData.entryPrice} onChange={handleChange} requirose />
-               <FormInput label="레버리지 (x)" name="leverage" type="number" value={formData.leverage} onChange={handleChange} requirose />
+               <FormInput label="진입가" name="entryPrice" type="number" step="any" value={formData.entryPrice} onChange={handleChange} required />
+               <FormInput label="레버리지 (x)" name="leverage" type="number" value={formData.leverage} onChange={handleChange} required />
              </div>
-             <PinkDatePicker label="오픈 시간" selected={formData.openDate} onChange={(val: string) => handleChange({ target: { name: 'openDate', value: val } })} />
+             
+             {/* 핑크색 달력 적용 */}
+             <PinkDatePicker 
+               label="오픈 시간" 
+               selected={formData.openDate} 
+               onChange={(val: string) => handleChange({ target: { name: 'openDate', value: val } })} 
+             />
+
+             <div>
                <CustomSelect 
                  label="전략 & 근거"
                  name="strategy"
@@ -1257,7 +1240,6 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                  icon={Icons.Down}
                />
                <div className="mt-3">
-                 {/* [수정] 메모장: 흰색 배경 + Rose 테두리 */}
                  <textarea 
                     name="entryMemo"
                     value={formData.entryMemo}
@@ -1268,7 +1250,7 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                </div>
              </div>
 
-             {/* [NEW] 차트 이미지 첨부 영역 */}
+             {/* 차트 이미지 첨부 영역 */}
              <div className="mt-2">
                 <label className="block text-xs font-bold text-zinc-500 mb-2">차트 스크린샷</label>
                 {!formData.chartImage ? (
@@ -1322,7 +1304,12 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                  </div>
                  <div className="grid grid-cols-2 gap-4">
                    <FormInput label="청산가" name="closePrice" type="number" step="any" value={formData.closePrice} onChange={handleChange} placeholder="입력시 자동 계산" />
-                   <PinkDatePicker label="청산 시간" selected={formData.closeDate} onChange={(val: string) => handleChange({ target: { name: 'closeDate', value: val } })} />
+                   {/* 핑크색 달력 적용 */}
+                   <PinkDatePicker 
+                     label="청산 시간" 
+                     selected={formData.closeDate} 
+                     onChange={(val: string) => handleChange({ target: { name: 'closeDate', value: val } })} 
+                   />
                  </div>
                  
                  <div>
@@ -1340,7 +1327,6 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
                      ))}
                    </div>
                  </div>
-                 {/* [수정] 메모장: Rose 테두리 통일 */}
                  <textarea 
                    name="exitMemo"
                    value={formData.exitMemo}
@@ -1363,7 +1349,6 @@ function TradeFormModal({ isOpen, onClose, initialData, onSave, strategies, exch
   );
 }
 
-// [수정] 흰색 배경과 연한 테두리 적용된 입력 컴포넌트
 function FormInput({ label, ...props }: any) {
   return (
     <div>
@@ -1376,7 +1361,6 @@ function FormInput({ label, ...props }: any) {
   );
 }
 
-// [수정] 흰색 배경 적용된 선택 컴포넌트
 function CustomSelect({ label, value, onChange, options, placeholder, name, icon: Icon }: any) {
   return (
     <div>
@@ -1404,54 +1388,7 @@ function CustomSelect({ label, value, onChange, options, placeholder, name, icon
     </div>
   );
 }
-<<<<<<< HEAD
-// [추가] 핑크 테마가 적용된 커스텀 달력 컴포넌트
-const PinkDatePicker = ({ label, selected, onChange }: any) => {
-  return (
-    <div className="w-full">
-      <label className="block text-xs font-bold text-zinc-500 mb-1">{label}</label>
-      <div className="relative">
-        <DatePicker
-          selected={selected ? new Date(selected) : null}
-          onChange={(date) => {
-            // 날짜를 선택하면 "2025-11-26T13:00" 같은 문자열 형식으로 변환해서 저장
-            if (date) {
-               // 한국 시간대 보정 (UTC -> KST)
-               const offset = date.getTimezoneOffset() * 60000;
-               const localISOTime = (new Date(date.getTime() - offset)).toISOString().slice(0, 16);
-               onChange(localISOTime);
-            }
-          }}
-          showTimeSelect
-          timeFormat="HH:mm"
-          timeIntervals={15}
-          dateFormat="yyyy. MM. dd. aa h:mm" // 예: 2025. 11. 26. 오후 1:00
-          locale={ko} // 한글 달력
-          timeCaption="시간"
-          className="w-full p-2.5 bg-white rounded-xl border border-zinc-200 focus:border-rose-300 focus:outline-none text-sm font-bold text-zinc-700 cursor-pointer"
-          placeholderText="날짜를 선택하세요"
-          // 달력 팝업 스타일 커스텀 (핑크 테마)
-          calendarClassName="!border-0 !shadow-xl !rounded-2xl !font-sans overflow-hidden"
-          dayClassName={(date) => "hover:!bg-rose-100 !rounded-full"}
-        />
-        {/* 달력 아이콘 꾸미기 */}
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-rose-300">
-           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
-        </div>
-      </div>
-      {/* react-datepicker 기본 파란색 헤더를 핑크색으로 덮어쓰기 위한 스타일 */}
-      <style jsx global>{`
-        .react-datepicker__header { background-color: #fff0f3 !important; border-bottom: none !important; }
-        .react-datepicker__current-month, .react-datepicker-time__header { color: #fb7185 !important; font-weight: 800 !important; }
-        .react-datepicker__day--selected, .react-datepicker__day--keyboard-selected { background-color: #fb7185 !important; border-radius: 50% !important; }
-        .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list li.react-datepicker__time-list-item--selected { background-color: #fb7185 !important; }
-        .react-datepicker__day-name { color: #fda4af !important; font-weight: bold; }
-        .react-datepicker-popper { z-index: 9999 !important; }
-      `}</style>
-    </div>
-  );
-};
-=======
+
 function NavButton({ icon, label, active, onClick }: any) {
   return (
     <button 
@@ -1479,4 +1416,45 @@ function SidebarItem({ icon, label, active, onClick }: any) {
     </button>
   );
 }
->>>>>>> b3dc250278d27c5ebb2bbc3879b2f13c335eb4ba
+
+// 핑크 테마가 적용된 커스텀 달력 컴포넌트
+const PinkDatePicker = ({ label, selected, onChange }: any) => {
+  return (
+    <div className="w-full">
+      <label className="block text-xs font-bold text-zinc-500 mb-1">{label}</label>
+      <div className="relative">
+        <DatePicker
+          selected={selected ? new Date(selected) : null}
+          onChange={(date) => {
+            if (date) {
+               const offset = date.getTimezoneOffset() * 60000;
+               const localISOTime = (new Date(date.getTime() - offset)).toISOString().slice(0, 16);
+               onChange(localISOTime);
+            }
+          }}
+          showTimeSelect
+          timeFormat="HH:mm"
+          timeIntervals={15}
+          dateFormat="yyyy. MM. dd. aa h:mm" 
+          locale={ko} 
+          timeCaption="시간"
+          className="w-full p-2.5 bg-white rounded-xl border border-zinc-200 focus:border-rose-300 focus:outline-none text-sm font-bold text-zinc-700 cursor-pointer"
+          placeholderText="날짜를 선택하세요"
+          calendarClassName="!border-0 !shadow-xl !rounded-2xl !font-sans overflow-hidden"
+          dayClassName={(date) => "hover:!bg-rose-100 !rounded-full"}
+        />
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-rose-300">
+           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+        </div>
+      </div>
+      <style jsx global>{`
+        .react-datepicker__header { background-color: #fff0f3 !important; border-bottom: none !important; }
+        .react-datepicker__current-month, .react-datepicker-time__header { color: #fb7185 !important; font-weight: 800 !important; }
+        .react-datepicker__day--selected, .react-datepicker__day--keyboard-selected { background-color: #fb7185 !important; border-radius: 50% !important; }
+        .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list li.react-datepicker__time-list-item--selected { background-color: #fb7185 !important; }
+        .react-datepicker__day-name { color: #fda4af !important; font-weight: bold; }
+        .react-datepicker-popper { z-index: 9999 !important; }
+      `}</style>
+    </div>
+  );
+};
